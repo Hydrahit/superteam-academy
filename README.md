@@ -8,6 +8,18 @@
 > **Interactive Solana learning platform with gamification, multi-language support, and on-chain credentials**
 
 ---
+# Superteam Academy 🎓 - Open Innovation (Agent Track Submission)
+
+## 1. Hosted Link
+**Live Demo:** [https://superteam-academy.vercel.app/](https://superteam-academy.vercel.app/)
+
+## 2. Product Description & Novelty
+Superteam Academy is a production-ready Learning Management System (LMS) designed specifically for Solana developers in Latin America (and globally). 
+**Novelty:** It moves away from boring static tutorials to a fully gamified, interactive experience. It features:
+- A custom Next.js 14 App Router frontend with Shadcn UI and a dark-mode first design.
+- i18n support natively (English locked for demo, structured for PT-BR and ES).
+- Modular architecture ready for Solana Anchor program integration (On-chain XP, cNFT credentials).
+- Code challenge UI ready for Monaco Editor integration.
 
 ## 📖 Quick Links
 
