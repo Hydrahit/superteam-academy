@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Trophy, Menu, X } from 'lucide-react';
-import { WalletButton } from '@/components/wallet/WalletButton';
+import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";;
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
