@@ -1,4 +1,4 @@
-# 🏆 Superteam Academy - Complete Learning Platform
+# 🏆 Superteam Academy — Updated Feb 2026 - Complete Learning Platform
 
 ![Status](https://img.shields.io/badge/status-production--ready-success)
 ![Tests](https://img.shields.io/badge/tests-50%20passing-success)
