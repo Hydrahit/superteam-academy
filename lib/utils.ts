@@ -19,13 +19,14 @@ export function formatXP(xp: number): string {
 
 /**
  * Calculate level from XP (using square root formula)
- * Level 1: 0-99 XP
- * Level 2: 100-399 XP
- * Level 3: 400-899 XP
+ * Level 0: 0-99 XP
+ * Level 1: 100-399 XP
+ * Level 2: 400-899 XP
  * etc.
+ * Negative XP is clamped to 0 before calculation.
  */
 export function calculateLevel(xp: number): number {
-  return Math.floor(Math.sqrt(xp / 100));
+  return Math.floor(Math.sqrt(Math.max(0, xp) / 100));
 }
 
 /**
@@ -44,7 +45,7 @@ export function levelProgress(currentXp: number): number {
   const nextLevelXp = xpForNextLevel(currentLevel);
   const progressXp = currentXp - currentLevelXp;
   const requiredXp = nextLevelXp - currentLevelXp;
-  
+
   return Math.min(Math.floor((progressXp / requiredXp) * 100), 100);
 }
 
@@ -94,37 +95,18 @@ export function formatRelativeTime(date: string | Date): string {
   if (diffMins > 0) {
     return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
   }
-  return 'Just now';
+  return 'just now';
 }
 
 /**
- * Sleep utility for delays
- */
-export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Generate a random ID (for mock data)
- */
-export function generateId(): string {
-  return Math.random().toString(36).substring(2, 15);
-}
-
-/**
- * Validate Solana address format
+ * Check if a string is a valid Solana address (base58, 32–44 chars)
  */
 export function isValidSolanaAddress(address: string): boolean {
-  try {
-    // Basic validation: should be 32-44 characters of base58
-    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-  } catch {
-    return false;
-  }
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
 }
 
 /**
- * Get difficulty color class
+ * Get Tailwind text-color class for a difficulty level
  */
 export function getDifficultyColor(difficulty: string): string {
   switch (difficulty.toLowerCase()) {
@@ -140,9 +122,11 @@ export function getDifficultyColor(difficulty: string): string {
 }
 
 /**
- * Get difficulty badge variant
+ * Get shadcn Badge variant for a difficulty level
  */
-export function getDifficultyVariant(difficulty: string): 'success' | 'warning' | 'destructive' | 'default' {
+export function getDifficultyVariant(
+  difficulty: string
+): 'success' | 'warning' | 'destructive' | 'default' {
   switch (difficulty.toLowerCase()) {
     case 'beginner':
       return 'success';

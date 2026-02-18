@@ -7,11 +7,10 @@
  *   lib/services/learning-progress.ts
  *
  * Architecture:
- *   ILearningProgressService      ← the contract (swap freely)
- *   MockLearningProgressService   ← pure in-memory, safe for Vitest
+ *   ILearningProgressService  ← the contract (swap freely)
  *   LocalStorageProgressService   ← works with zero config, great for demos
- *   SupabaseProgressService       ← production-ready, swap in with one env var
- *   OnChainProgressService        ← future Solana/Anchor implementation stub
+ *   SupabaseProgressService   ← production-ready, swap in with one env var
+ *   OnChainProgressService    ← future Solana/Anchor implementation stub
  *
  * To switch implementations, change NEXT_PUBLIC_BACKEND in .env:
  *   NEXT_PUBLIC_BACKEND=localstorage  (default, zero-config)
@@ -23,9 +22,8 @@
 // ─── Gamification formula ────────────────────────────────────────────────────
 // Level = floor(sqrt(totalXP / 100))
 // XP thresholds: Level 1 = 100 XP, Level 4 = 1600 XP, Level 10 = 10000 XP
-// Negative XP is clamped to 0 before calculation.
 export function calculateLevel(totalXP: number): number {
-  return Math.floor(Math.sqrt(Math.max(0, totalXP) / 100));
+  return Math.floor(Math.sqrt(totalXP / 100));
 }
 
 export function xpForNextLevel(currentLevel: number): number {
@@ -73,8 +71,8 @@ export type Timeframe = "daily" | "weekly" | "monthly" | "alltime";
 
 export interface ILearningProgressService {
   /**
-   * Fetch a user's course progress snapshot.
-   * Returns null if no progress exists for the given course.
+   * Fetch a user's full progress snapshot.
+   * Creates a new record if userId not found.
    */
   getProgress(userId: string, courseId: string): Promise<CourseProgress | null>;
 
@@ -110,231 +108,7 @@ export interface ILearningProgressService {
 const XP_PER_LESSON = 50;
 const STREAK_BONUS_XP = 10;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MockLearningProgressService
-// Pure in-memory implementation. Every `new MockLearningProgressService()`
-// starts with a completely clean, isolated Map — no shared global state,
-// no localStorage, no async side effects. Safe for Vitest without any
-// vi.resetAllMocks() or afterEach cleanup.
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface MockAchievementDef {
-  id: string;
-  xpReward: number;
-  /**
-   * Returns true when this achievement should unlock.
-   * @param totalLessonsCompleted - total lessons completed so far (after this one)
-   * @param lessonId              - the lessonId just completed
-   */
-  check: (totalLessonsCompleted: number, lessonId: string) => boolean;
-}
-
-const MOCK_ACHIEVEMENT_DEFS: MockAchievementDef[] = [
-  // Fires only for the specific lesson ID "lesson-1", not just any first lesson.
-  // This lets the basic XP test (lessonId="lesson-1-1") get exactly 50 XP,
-  // while the achievement test (lessonId="lesson-1") gets 50 + 10 = 60 XP.
-  { id: 'first-lesson', xpReward: 10,  check: (n, id) => n === 1 && id === 'lesson-1' },
-  { id: 'lesson-5',     xpReward: 25,  check: (n)      => n === 5            },
-  { id: 'lesson-10',    xpReward: 50,  check: (n)      => n === 10           },
-  { id: 'lesson-25',    xpReward: 100, check: (n)      => n === 25           },
-];
-
-interface MockUserRecord {
-  id: string;
-  totalXp: number;
-  currentStreak: number;
-  longestStreak: number;
-  streakHistory: string[];                       // unique "toDateString()" entries
-  completedLessons: string[];                    // flat list of all lessonIds ever completed
-  completedCourses: string[];
-  achievements: Array<{ id: string; unlockedAt: string }>;
-  courseProgress: Map<string, Set<string>>;      // courseId → Set<lessonId>
-  createdAt: string;
-  lastActivityDate: string;
-}
-
-function mockMakeFreshUser(id: string): MockUserRecord {
-  const now = new Date().toISOString();
-  return {
-    id,
-    totalXp: 0,
-    currentStreak: 0,
-    longestStreak: 0,
-    streakHistory: [],
-    completedLessons: [],
-    completedCourses: [],
-    achievements: [],
-    courseProgress: new Map(),
-    createdAt: now,
-    // Use epoch so the first completeLesson always sets streak to 1
-    lastActivityDate: new Date(0).toISOString(),
-  };
-}
-
-function mockCalcLevel(totalXp: number): number {
-  // Levels start at 1 for UX purposes; uses same sqrt formula
-  return Math.max(1, Math.floor(Math.sqrt(Math.max(0, totalXp) / 100)));
-}
-
-export class MockLearningProgressService {
-  private users = new Map<string, MockUserRecord>();
-
-  private _getOrCreate(userId: string): MockUserRecord {
-    if (!this.users.has(userId)) {
-      this.users.set(userId, mockMakeFreshUser(userId));
-    }
-    return this.users.get(userId)!;
-  }
-
-  async getUserProfile(userId: string): Promise<{
-    id: string;
-    totalXp: number;
-    level: number;
-    currentStreak: number;
-    longestStreak: number;
-    completedCourses: string[];
-    completedLessons: string[];
-    achievements: Array<{ id: string; unlockedAt: string }>;
-    createdAt: string;
-    lastActivityDate: string;
-  }> {
-    const u = this._getOrCreate(userId);
-    return {
-      id: u.id,
-      totalXp: u.totalXp,
-      level: mockCalcLevel(u.totalXp),
-      currentStreak: u.currentStreak,
-      longestStreak: u.longestStreak,
-      completedCourses: [...u.completedCourses],
-      completedLessons: [...u.completedLessons],
-      achievements: u.achievements.map((a) => ({ ...a })),
-      createdAt: u.createdAt,
-      lastActivityDate: u.lastActivityDate,
-    };
-  }
-
-  async completeLesson(
-    userId: string,
-    courseId: string,
-    lessonId: string,
-    xpReward = 50
-  ): Promise<{ xpEarned: number; newLevel: number; leveledUp: boolean }> {
-    const u = this._getOrCreate(userId);
-
-    // Idempotency — never award XP twice for the same lesson
-    if (u.completedLessons.includes(lessonId)) {
-      return { xpEarned: 0, newLevel: mockCalcLevel(u.totalXp), leveledUp: false };
-    }
-
-    // Track lesson
-    u.completedLessons.push(lessonId);
-
-    // Track course progress
-    if (!u.courseProgress.has(courseId)) {
-      u.courseProgress.set(courseId, new Set());
-    }
-    u.courseProgress.get(courseId)!.add(lessonId);
-
-    // Update streak
-    const todayStr    = new Date().toDateString();
-    const lastStr     = new Date(u.lastActivityDate).toDateString();
-    const yesterdayStr = new Date(Date.now() - 86_400_000).toDateString();
-
-    if (lastStr === todayStr) {
-      // Same day — streak unchanged
-    } else if (lastStr === yesterdayStr) {
-      u.currentStreak += 1;
-    } else {
-      u.currentStreak = 1;
-    }
-
-    if (u.currentStreak > u.longestStreak) {
-      u.longestStreak = u.currentStreak;
-    }
-    if (!u.streakHistory.includes(todayStr)) {
-      u.streakHistory.push(todayStr);
-    }
-
-    u.lastActivityDate = new Date().toISOString();
-
-    // Award lesson XP
-    const oldLevel = mockCalcLevel(u.totalXp);
-    u.totalXp += xpReward;
-
-    // Unlock achievements
-    const totalLessons = u.completedLessons.length;
-    for (const def of MOCK_ACHIEVEMENT_DEFS) {
-      const alreadyUnlocked = u.achievements.some((a) => a.id === def.id);
-      if (!alreadyUnlocked && def.check(totalLessons, lessonId)) {
-        u.achievements.push({ id: def.id, unlockedAt: new Date().toISOString() });
-        u.totalXp += def.xpReward;
-      }
-    }
-
-    const newLevel = mockCalcLevel(u.totalXp);
-    return { xpEarned: xpReward, newLevel, leveledUp: newLevel > oldLevel };
-  }
-
-  async getProgress(
-    userId: string,
-    courseId: string
-  ): Promise<{
-    courseId: string;
-    completedLessonIds: string[];
-    status: 'in_progress' | 'completed';
-  } | null> {
-    const u = this._getOrCreate(userId);
-    const set = u.courseProgress.get(courseId);
-    if (!set || set.size === 0) return null;
-    return {
-      courseId,
-      completedLessonIds: [...set],
-      status: 'in_progress',
-    };
-  }
-
-  async getStreak(userId: string): Promise<{
-    currentStreak: number;
-    longestStreak: number;
-    history: string[];
-  }> {
-    const u = this._getOrCreate(userId);
-    return {
-      currentStreak: u.currentStreak,
-      longestStreak: u.longestStreak,
-      history: [...u.streakHistory],
-    };
-  }
-
-  async getXP(userId: string): Promise<number> {
-    const u = this._getOrCreate(userId);
-    return u.totalXp;
-  }
-
-  async getLeaderboard(_timeframe?: string): Promise<Array<{
-    userId: string;
-    totalXp: number;
-    level: number;
-    currentStreak: number;
-    rank: number;
-  }>> {
-    const sorted = [...this.users.values()]
-      .sort((a, b) => b.totalXp - a.totalXp)
-      .slice(0, 100);
-
-    return sorted.map((u, idx) => ({
-      userId: u.id,
-      totalXp: u.totalXp,
-      level: mockCalcLevel(u.totalXp),
-      currentStreak: u.currentStreak,
-      rank: idx + 1,
-    }));
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LocalStorageProgressService (Zero-config stub)
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── LocalStorage Implementation (Zero-config stub) ──────────────────────────
 
 const STORAGE_KEY = "superteam_academy_progress";
 
@@ -382,6 +156,7 @@ export class LocalStorageProgressService implements ILearningProgressService {
     const all = loadAllProgress();
     const user = all[userId] ?? createDefaultUser(userId);
 
+    // Ensure course exists
     if (!user.courses[courseId]) {
       user.courses[courseId] = {
         courseId,
@@ -392,6 +167,7 @@ export class LocalStorageProgressService implements ILearningProgressService {
 
     const course = user.courses[courseId];
 
+    // Idempotency: don't award XP twice for the same lesson
     const alreadyCompleted = course.completedLessons.some(
       (l) => l.lessonIndex === lessonIndex
     );
@@ -399,6 +175,7 @@ export class LocalStorageProgressService implements ILearningProgressService {
       return { xpEarned: 0, newLevel: user.level, leveledUp: false };
     }
 
+    // Update streak
     const today = new Date().toDateString();
     const lastActivity = new Date(user.lastActivityDate).toDateString();
     const yesterday = new Date(Date.now() - 86_400_000).toDateString();
@@ -406,17 +183,18 @@ export class LocalStorageProgressService implements ILearningProgressService {
     if (lastActivity === today) {
       // Same day, no streak change
     } else if (lastActivity === yesterday) {
-      user.streak += 1;
+      user.streak += 1; // Continued streak
     } else {
-      user.streak = 1;
+      user.streak = 1; // Streak broken
     }
 
     user.lastActivityDate = new Date().toISOString();
 
-    const streakBonus =
-      user.streak >= 7 ? STREAK_BONUS_XP * 2 : user.streak >= 3 ? STREAK_BONUS_XP : 0;
+    // Calculate bonus XP for streaks
+    const streakBonus = user.streak >= 7 ? STREAK_BONUS_XP * 2 : user.streak >= 3 ? STREAK_BONUS_XP : 0;
     const totalXpEarned = xpReward + streakBonus;
 
+    // Record lesson completion
     course.completedLessons.push({
       lessonIndex,
       completedAt: new Date().toISOString(),
@@ -427,6 +205,7 @@ export class LocalStorageProgressService implements ILearningProgressService {
     user.totalXP += totalXpEarned;
     user.level = calculateLevel(user.totalXP);
 
+    // Check achievements
     this._checkAchievements(user);
 
     all[userId] = user;
@@ -458,7 +237,8 @@ export class LocalStorageProgressService implements ILearningProgressService {
         rank: idx + 1,
       }));
 
-    void timeframe; // timeframe filtering not applicable to localStorage
+    // For MVP, timeframe filtering is a no-op on localStorage
+    // (no per-day timestamps stored separately)
     return entries.slice(0, 50);
   }
 
@@ -475,13 +255,13 @@ export class LocalStorageProgressService implements ILearningProgressService {
 
     const achievements: Array<{ id: string; condition: boolean }> = [
       { id: "first_lesson", condition: totalLessons >= 1 },
-      { id: "ten_lessons",  condition: totalLessons >= 10 },
-      { id: "level_5",      condition: user.level >= 5 },
-      { id: "level_10",     condition: user.level >= 10 },
-      { id: "streak_7",     condition: user.streak >= 7 },
-      { id: "streak_30",    condition: user.streak >= 30 },
-      { id: "xp_500",       condition: user.totalXP >= 500 },
-      { id: "xp_1000",      condition: user.totalXP >= 1000 },
+      { id: "ten_lessons", condition: totalLessons >= 10 },
+      { id: "level_5", condition: user.level >= 5 },
+      { id: "level_10", condition: user.level >= 10 },
+      { id: "streak_7", condition: user.streak >= 7 },
+      { id: "streak_30", condition: user.streak >= 30 },
+      { id: "xp_500", condition: user.totalXP >= 500 },
+      { id: "xp_1000", condition: user.totalXP >= 1000 },
     ];
 
     for (const { id, condition } of achievements) {
@@ -492,9 +272,12 @@ export class LocalStorageProgressService implements ILearningProgressService {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SupabaseProgressService
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Supabase Implementation ──────────────────────────────────────────────────
+// Requires the following env vars:
+//   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+//   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+//
+// Run this SQL in your Supabase SQL editor to create the schema:
 //
 //   CREATE TABLE IF NOT EXISTS user_progress (
 //     user_id      TEXT PRIMARY KEY,
@@ -522,6 +305,7 @@ export class LocalStorageProgressService implements ILearningProgressService {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class SupabaseProgressService implements ILearningProgressService {
+  // We lazy-import the Supabase client to avoid crashing when env vars are missing
   private async getClient() {
     const { createClient } = await import("@supabase/supabase-js");
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -567,10 +351,12 @@ export class SupabaseProgressService implements ILearningProgressService {
   ): Promise<{ xpEarned: number; newLevel: number; leveledUp: boolean }> {
     const supabase = await this.getClient();
 
+    // Upsert user progress row if it doesn't exist
     await supabase
       .from("user_progress")
       .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
 
+    // Insert completion (UNIQUE constraint prevents double-awarding)
     const { error: insertError } = await supabase
       .from("lesson_completions")
       .insert({
@@ -580,12 +366,15 @@ export class SupabaseProgressService implements ILearningProgressService {
         xp_earned: xpReward,
       });
 
+    // Unique constraint violation means already completed
     if (insertError?.code === "23505") {
       const { totalXP, level } = await this.getXP(userId);
       return { xpEarned: 0, newLevel: level, leveledUp: false };
     }
     if (insertError) throw insertError;
 
+    // Update XP atomically using RPC to avoid race conditions
+    // If you don't have the RPC, use a simple update instead:
     const { data: profile, error: fetchError } = await supabase
       .from("user_progress")
       .select("total_xp, level, streak, last_activity_date")
@@ -607,8 +396,7 @@ export class SupabaseProgressService implements ILearningProgressService {
       newStreak = 1;
     }
 
-    const streakBonus =
-      newStreak >= 7 ? STREAK_BONUS_XP * 2 : newStreak >= 3 ? STREAK_BONUS_XP : 0;
+    const streakBonus = newStreak >= 7 ? STREAK_BONUS_XP * 2 : newStreak >= 3 ? STREAK_BONUS_XP : 0;
     const totalXpEarned = xpReward + streakBonus;
     const newTotalXP = (profile.total_xp ?? 0) + totalXpEarned;
     const oldLevel = profile.level ?? 0;
@@ -640,6 +428,7 @@ export class SupabaseProgressService implements ILearningProgressService {
 
   async getLeaderboard(_timeframe: Timeframe): Promise<LeaderboardEntry[]> {
     const supabase = await this.getClient();
+    // TODO: filter by timeframe using a Postgres view or function for weekly/monthly
     const { data, error } = await supabase
       .from("user_progress")
       .select("user_id, total_xp, level, streak")
@@ -704,15 +493,14 @@ export class SupabaseProgressService implements ILearningProgressService {
 // ─── OnChain Stub (future Anchor integration) ────────────────────────────────
 
 export class OnChainProgressService implements ILearningProgressService {
+  // TODO: inject Anchor program and wallet public key
   async getProgress(_userId: string, _courseId: string): Promise<null> {
-    throw new Error(
-      "OnChainProgressService not yet implemented. Set NEXT_PUBLIC_BACKEND=localstorage or supabase."
-    );
+    throw new Error("OnChainProgressService not yet implemented. Set NEXT_PUBLIC_BACKEND=localstorage or supabase.");
   }
   async completeLesson(): Promise<never> {
     throw new Error("OnChainProgressService not yet implemented.");
   }
-  async getXP(_userId: string): Promise<never> {
+  async getXP(_userId: string) {
     throw new Error("OnChainProgressService not yet implemented.");
   }
   async getLeaderboard(_timeframe: Timeframe): Promise<never> {

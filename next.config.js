@@ -1,13 +1,19 @@
 /** @type {import('next').NextConfig} */
+
+const createNextIntlPlugin = require('next-intl/plugin');
+
+// Point the plugin at your i18n config file
+const withNextIntl = createNextIntlPlugin('./i18n.ts');
+
 const nextConfig = {
-  // 🚀 VIBE CODER CHEAT CODE: Ignore ESLint & TS errors during Vercel build
+  // Ignore ESLint & TS errors during Vercel build
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
   },
-  
+
   webpack: (config, { isServer }) => {
     // Solana Web3.js requires polyfills for Node.js modules
     if (!isServer) {
@@ -19,18 +25,17 @@ const nextConfig = {
         crypto: false,
       };
     }
-    
     return config;
   },
-  // Experimental features for better performance
+
   experimental: {
     optimizePackageImports: ['lucide-react', '@solana/web3.js'],
   },
-  // Image optimization (if you add course images)
+
   images: {
     domains: ['localhost'],
     formats: ['image/avif', 'image/webp'],
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);
