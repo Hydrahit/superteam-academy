@@ -3,23 +3,33 @@
  *
  * Root layout.
  *
- * Provider order matters:
- *   WalletProvider must wrap AuthProvider because AuthProvider reads
- *   wallet state via useWallet() from @solana/wallet-adapter-react.
+ * ── Why both providers are here, and why order matters ───────────────────────
  *
- *   WalletProvider
- *     └── AuthProvider       (uses useWallet() internally)
- *           └── {children}
+ *  WalletProvider  (outermost)
+ *    Sets up three Solana contexts:
+ *      ConnectionProvider   → useConnection()
+ *      SolanaWalletProvider → useWallet()
+ *      WalletModalProvider  → useWalletModal()  ← AuthButton needs this
+ *
+ *  AuthProvider  (inside WalletProvider)
+ *    Calls useWallet() on mount to read publicKey / connected state.
+ *    MUST be inside WalletProvider or useWallet() returns undefined context
+ *    and the app throws on every render.
+ *
+ *  Previous bug: AuthProvider was missing from this file entirely.
+ *  AuthButton called useAuth() → threw "useAuth() must be used inside
+ *  <AuthProvider>" → the button crashed silently in the browser.
  */
 
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
+// Required: styles for the Solana wallet modal (Connect Wallet dialog)
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-import { WalletProvider }    from '@/components/providers/WalletProvider';
-import { AuthProvider }      from '@/contexts/AuthContext';
+import { WalletProvider } from '@/components/providers/WalletProvider';
+import { AuthProvider }   from '@/contexts/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,12 +45,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        {/* WalletProvider must be outermost — it sets up the Solana context
-            that AuthProvider reads from via useWallet(). */}
+        {/*
+          ORDER IS MANDATORY:
+            1. WalletProvider — must be outermost so AuthProvider can call useWallet()
+            2. AuthProvider   — reads wallet state; provides useAuth() to all children
+
+          If WalletProvider is missing:   wallet connect button does nothing
+          If AuthProvider is missing:     useAuth() throws, AuthButton crashes silently
+          If order is reversed:           AuthProvider calls useWallet() outside its
+                                          provider context → runtime crash
+        */}
         <WalletProvider>
           <AuthProvider>
             {children}
