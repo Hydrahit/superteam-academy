@@ -3,12 +3,38 @@
 /**
  * components/layout/LanguageSwitcher.tsx
  *
- * Switches the app locale by navigating to the same page under the new
- * locale prefix.  next-intl middleware keeps the NEXT_LOCALE cookie in
- * sync so the choice persists across refreshes.
+ * ── What was broken (three separate bugs) ────────────────────────────────────
  *
- * URL structure (set by middleware with localePrefix: 'always'):
- *   /en/courses  →  /pt-br/courses  →  /es/courses
+ * BUG 1 — Wrong locale source
+ *   The old component read `locale` from the Zustand store (lib/store/user.ts),
+ *   which always initialises to 'en'. So:
+ *     - The active checkmark always showed English, even on a Portuguese page.
+ *     - `if (newLocale === locale) return` silently no-op'd when a pt-BR user
+ *       clicked Portuguese (Zustand said 'en', new = 'pt-br' → proceed, but
+ *       then on the next page load Zustand reset to 'en' again).
+ *
+ * BUG 2 — No explicit cookie write
+ *   The switcher relied on the middleware to set NEXT_LOCALE during the
+ *   redirect. But with localeDetection:true the middleware re-read
+ *   Accept-Language and overwrote that cookie immediately.
+ *
+ * BUG 3 — stale guard after navigation
+ *   Even when navigation succeeded, useLocale() from Zustand returned 'en'
+ *   on every fresh page load, making the UI look like the switch reverted.
+ *
+ * ── The fixes ────────────────────────────────────────────────────────────────
+ *
+ * FIX 1 — Derive current locale directly from usePathname()
+ *   With localePrefix:'always' the locale is always segment [1] of the URL.
+ *   This is 100 % accurate with zero provider dependencies.
+ *
+ * FIX 2 — Write NEXT_LOCALE cookie explicitly before navigating
+ *   next-intl reads this cookie (name: 'NEXT_LOCALE') as the second-highest
+ *   priority source (after the URL prefix). Writing it client-side ensures
+ *   the choice persists even on routes that might not carry the prefix.
+ *
+ * FIX 3 — Remove Zustand from locale logic entirely
+ *   Zustand is still used for other user state; locale is now URL-driven.
  */
 
 import { Globe } from 'lucide-react';
@@ -19,51 +45,79 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useLocale } from '@/lib/store/user';
-import { Locale } from '@/lib/types/domain';
 import { useRouter, usePathname } from 'next/navigation';
 
-const languages: { code: Locale; name: string; flag: string }[] = [
-  { code: 'en',    name: 'English',    flag: '🇺🇸' },
-  { code: 'pt-br', name: 'Português',  flag: '🇧🇷' },
-  { code: 'es',    name: 'Español',    flag: '🇪🇸' },
+// ── Supported locales (must match i18n.ts + middleware.ts) ───────────────────
+type SupportedLocale = 'en' | 'pt-br' | 'es';
+
+const LANGUAGES: { code: SupportedLocale; name: string; flag: string }[] = [
+  { code: 'en',    name: 'English',   flag: '🇺🇸' },
+  { code: 'pt-br', name: 'Português', flag: '🇧🇷' },
+  { code: 'es',    name: 'Español',   flag: '🇪🇸' },
 ];
 
-// All locale codes the middleware uses as URL prefixes.
-const LOCALE_PREFIXES = languages.map((l) => l.code);
+const LOCALE_CODES = LANGUAGES.map((l) => l.code);
+
+// ── Cookie helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Write the NEXT_LOCALE cookie.
+ * next-intl middleware reads this as the fallback when the URL has no prefix.
+ * Max-age 1 year; SameSite=Lax so it's sent on top-level navigations.
+ */
+function setLocaleCookie(locale: string): void {
+  if (typeof document === 'undefined') return;
+  const maxAge = 60 * 60 * 24 * 365; // 1 year
+  document.cookie = `NEXT_LOCALE=${locale}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+}
+
+// ── Derive locale from current pathname ───────────────────────────────────────
+
+/**
+ * With localePrefix:'always' the URL is always /{locale}/rest-of-path.
+ * Split the pathname and check whether segment [1] is a known locale.
+ * Falls back to 'en' if somehow we're on a non-prefixed route.
+ */
+function getLocaleFromPath(pathname: string): SupportedLocale {
+  const segment = pathname.split('/')[1] ?? '';
+  return (LOCALE_CODES as string[]).includes(segment)
+    ? (segment as SupportedLocale)
+    : 'en';
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function LanguageSwitcher() {
-  const { locale, setLocale } = useLocale();
-  const router = useRouter();
+  const router   = useRouter();
   const pathname = usePathname(); // e.g. "/en/courses/solana-101"
 
-  const currentLanguage =
-    languages.find((lang) => lang.code === locale) ?? languages[0];
+  // FIX 1: read from URL, not from Zustand
+  const currentLocale   = getLocaleFromPath(pathname);
+  const currentLanguage = LANGUAGES.find((l) => l.code === currentLocale) ?? LANGUAGES[0];
 
-  const handleLanguageChange = (newLocale: Locale) => {
-    if (newLocale === locale) return;
+  const handleLanguageChange = (newLocale: SupportedLocale): void => {
+    // No-op if already on the requested locale
+    if (newLocale === currentLocale) return;
 
-    // 1. Update Zustand store for immediate UI feedback (active check-mark, etc.)
-    setLocale(newLocale);
+    // FIX 2: write cookie BEFORE navigating so the middleware reads the new
+    // value even if the user lands on a route without an explicit prefix.
+    setLocaleCookie(newLocale);
 
-    // 2. Build the new path by replacing the leading locale segment.
-    //    pathname always starts with "/{locale}" because middleware uses
-    //    localePrefix: 'always'.
+    // Build the new path by swapping the locale segment.
+    // pathname is always "/{locale}/..." with localePrefix:'always'.
     const segments = pathname.split('/');
-    // segments = ['', 'en', 'courses', 'solana-101']
-    //              ^0    ^1     ^2           ^3
+    // segments: ['', 'en', 'courses', 'solana-101']
+    //              ^0   ^1    ^2          ^3
 
-    if (segments.length > 1 && LOCALE_PREFIXES.includes(segments[1])) {
-      // Replace the existing locale segment
+    if ((LOCALE_CODES as string[]).includes(segments[1] ?? '')) {
+      // Normal case — replace the existing locale segment
       segments[1] = newLocale;
     } else {
-      // Fallback: prepend the new locale (shouldn't happen with 'always' prefix)
+      // Fallback — prepend locale (shouldn't occur with 'always' prefix)
       segments.splice(1, 0, newLocale);
     }
 
     const newPath = segments.join('/') || `/${newLocale}`;
-
-    // 3. Navigate — Next.js + next-intl middleware will set the cookie.
     router.push(newPath);
   };
 
@@ -76,8 +130,9 @@ export function LanguageSwitcher() {
           <span className="sm:hidden">{currentLanguage.flag}</span>
         </Button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end">
-        {languages.map((language) => (
+        {LANGUAGES.map((language) => (
           <DropdownMenuItem
             key={language.code}
             onClick={() => handleLanguageChange(language.code)}
@@ -85,7 +140,8 @@ export function LanguageSwitcher() {
           >
             <span>{language.flag}</span>
             <span>{language.name}</span>
-            {locale === language.code && (
+            {/* FIX 3: active mark driven by URL, not Zustand */}
+            {currentLocale === language.code && (
               <span className="ml-auto text-primary">✓</span>
             )}
           </DropdownMenuItem>

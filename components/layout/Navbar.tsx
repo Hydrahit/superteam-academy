@@ -1,56 +1,61 @@
-// components/layout/Navbar.tsx
-
 'use client';
+
+/**
+ * components/layout/Navbar.tsx
+ *
+ * Updated to use useAuth() instead of raw useWallet().
+ * Auth state now drives nav link visibility and the action button.
+ */
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Trophy, Menu, X } from 'lucide-react';
-import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";;
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { Badge } from '@/components/ui/badge';
+import { Trophy, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useUserStore } from '@/lib/store/user';
+import { Badge } from '@/components/ui/badge';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { AuthButton } from '@/components/auth/AuthButton';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatXP } from '@/lib/utils';
 import { useState } from 'react';
 
 export function Navbar() {
   const pathname = usePathname();
-  const { connected } = useWallet();
-  const { user } = useUserStore();
+  const { authStage, profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const isAuthenticated =
+    authStage === 'google_only' ||
+    authStage === 'fully_linked' ||
+    authStage === 'wallet_only';
+
   const navLinks = [
-    { href: '/courses', label: 'Courses' },
+    { href: '/courses',     label: 'Courses' },
     { href: '/leaderboard', label: 'Leaderboard' },
-    ...(connected ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
+    ...(isAuthenticated ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
   ];
 
-  const isActive = (href: string) => pathname.startsWith(href);
+  const isActive = (href: string) => pathname.includes(href);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container flex h-16 items-center justify-between">
+
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-            <span className="text-primary-foreground font-bold text-sm">ST</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <span className="text-sm font-bold text-primary-foreground">ST</span>
           </div>
-          <span className="font-bold text-lg hidden sm:inline">
-            Superteam Academy
-          </span>
+          <span className="hidden font-bold text-lg sm:inline">Superteam Academy</span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop nav links */}
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive(link.href)
-                  ? 'text-foreground'
-                  : 'text-muted-foreground'
+                isActive(link.href) ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
               {link.label}
@@ -58,67 +63,59 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* Right Section */}
-        <div className="flex items-center space-x-4">
-          {/* XP Badge (only when connected and user loaded) */}
-          {connected && user && (
-            <Badge variant="secondary" className="gap-2 hidden sm:flex">
+        {/* Right side: XP badge + auth + language */}
+        <div className="hidden md:flex items-center gap-3">
+          {/* XP Badge — only when profile exists */}
+          {profile && (
+            <Badge variant="secondary" className="gap-1">
               <Trophy className="h-3 w-3 text-yellow-500" />
-              <span className="font-semibold">{formatXP(user.totalXp)} XP</span>
-              <span className="text-muted-foreground">• Lvl {user.level}</span>
+              <span>{formatXP(profile.total_xp)} XP</span>
             </Badge>
           )}
 
-          {/* Language Switcher */}
           <LanguageSwitcher />
 
-          {/* Wallet Button */}
-          <WalletButton />
-
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
+          {/* Smart auth button — changes label based on auth stage */}
+          {authStage === 'fully_linked' ? (
+            <div className="flex items-center gap-1">
+              <AuthButton variant="default" size="sm" />
+              <Button variant="ghost" size="sm" onClick={signOut} title="Sign out">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <AuthButton variant="default" size="sm" />
+          )}
         </div>
+
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden p-2"
+          onClick={() => setMobileMenuOpen((o) => !o)}
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t">
+        <div className="border-t bg-background md:hidden">
           <div className="container py-4 space-y-3">
-            {/* XP Badge for mobile */}
-            {connected && user && (
-              <Badge variant="secondary" className="gap-2 w-full justify-center">
-                <Trophy className="h-3 w-3 text-yellow-500" />
-                <span className="font-semibold">{formatXP(user.totalXp)} XP</span>
-                <span className="text-muted-foreground">• Lvl {user.level}</span>
-              </Badge>
-            )}
-
-            {/* Mobile Nav Links */}
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
+                className="block text-sm font-medium text-muted-foreground hover:text-primary"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive(link.href)
-                    ? 'bg-accent text-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                }`}
               >
                 {link.label}
               </Link>
             ))}
+            <div className="pt-2 border-t flex items-center gap-2">
+              <LanguageSwitcher />
+              <AuthButton variant="outline" size="sm" />
+            </div>
           </div>
         </div>
       )}
