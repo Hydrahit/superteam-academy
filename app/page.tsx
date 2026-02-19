@@ -9,7 +9,6 @@ import { useEffect, useRef, useState, CSSProperties } from 'react';
 import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { motion, useInView, useMotionValue, useSpring, Variants } from 'framer-motion';
-import { Geist, Geist_Mono } from 'next/font/google';
 import {
   ArrowRight, Code2, Trophy, Shield, Globe2, Zap,
   BookOpen, Users, ChevronRight, Star, CheckCircle2,
@@ -18,10 +17,6 @@ import {
 import { getCourseService, getAnalyticsService } from '@/lib/services';
 import { Course } from '@/lib/types/domain';
 import { formatDuration } from '@/lib/utils';
-
-// ── Fonts ─────────────────────────────────────────────────────────────────────
-const geist     = Geist({ subsets: ['latin'], variable: '--font-geist' });
-const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 // ── Motion variants ───────────────────────────────────────────────────────────
 const fadeUp: Variants = {
@@ -204,8 +199,7 @@ export default function HomePage() {
 
   return (
     <div
-      className={`${geist.variable} ${geistMono.variable} relative min-h-screen overflow-x-hidden bg-[#09090f] text-white antialiased`}
-      style={{ fontFamily: 'var(--font-geist), system-ui, sans-serif' }}
+      className="relative min-h-screen overflow-x-hidden bg-[#09090f] text-white antialiased font-sans"
     >
       <Background />
 
