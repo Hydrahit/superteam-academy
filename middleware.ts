@@ -1,150 +1,72 @@
 /**
  * middleware.ts — project root
  *
- * Replaces createIntlMiddleware() with explicit locale routing.
- *
- * WHY WE DITCHED createIntlMiddleware():
- *   next-intl v3's localeDetection:false only suppresses Accept-Language header
- *   detection. It does NOT suppress NEXT_LOCALE cookie detection. So a stale
- *   NEXT_LOCALE=pt-br cookie (from testing, a previous deploy, or anything)
- *   overrides defaultLocale:'en' on every bare-path request — permanently.
- *
- * HOW THIS MIDDLEWARE DECIDES THE LOCALE:
- *   Priority 1 — URL path prefix   /pt-br/courses → 'pt-br'
- *   Priority 2 — NEXT_LOCALE cookie (only if it's a valid locale)
- *   Priority 3 — 'en' (hardcoded fallback — never Accept-Language)
- *
- *   On every response we write NEXT_LOCALE=<resolved-locale> so the cookie
- *   always matches what's in the URL.
+ * FIX: Implicit 'any' on cookiesToSet destructure — same root cause as
+ * lib/supabase/server.ts. Added `import type { CookieOptionsWithName }` and
+ * annotated the setAll parameter.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import type { CookieOptionsWithName } from '@supabase/ssr';
 
-// ── Locale config (keep in sync with i18n.ts) ─────────────────────────────────
-
-const LOCALES    = ['en', 'pt-br', 'es'] as const;
-type Locale      = typeof LOCALES[number];
-const DEFAULT_LOCALE: Locale = 'en';          // ← single source of truth
-
-// ── Route protection ──────────────────────────────────────────────────────────
+const LOCALES       = ['en', 'pt-br', 'es'] as const;
+type Locale         = typeof LOCALES[number];
+const DEFAULT_LOCALE: Locale = 'en';
 
 const PROTECTED_PATTERNS = [
   /^\/dashboard(\/.*)?$/,
   /^\/courses\/[^/]+\/lessons(\/.*)?$/,
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function isValidLocale(s: string): s is Locale {
   return (LOCALES as readonly string[]).includes(s);
 }
-
-/**
- * Extract the locale prefix from a pathname.
- * /en/courses → 'en'
- * /pt-br/dashboard → 'pt-br'
- * /about → null
- */
 function getLocaleFromPath(pathname: string): Locale | null {
   const segment = pathname.split('/')[1] ?? '';
   return isValidLocale(segment) ? segment : null;
 }
-
-/**
- * Strip the locale prefix and return the bare path.
- * /en/courses/solana-101 → /courses/solana-101
- * /about → /about
- */
-function stripLocalePrefix(pathname: string): string {
-  const locale = getLocaleFromPath(pathname);
-  if (!locale) return pathname;
-  const after = pathname.slice(locale.length + 1); // +1 for leading /
-  return after === '' ? '/' : after;
+export function stripLocale(pathname: string): string {
+  const pattern = new RegExp(`^\\/(${LOCALES.join('|')})(\/.*)?$`);
+  const match   = pathname.match(pattern);
+  return match ? (match[2] || '/') : pathname;
 }
-
-function isProtectedPath(barePath: string): boolean {
+export function isProtectedPath(barePath: string): boolean {
   return PROTECTED_PATTERNS.some((p) => p.test(barePath));
 }
-
-// ── Main middleware ───────────────────────────────────────────────────────────
+function setCookieLocale(response: NextResponse, locale: Locale): void {
+  response.cookies.set('NEXT_LOCALE', locale, {
+    path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax', httpOnly: false,
+  });
+}
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
-
-  // ── Step 1: Resolve the correct locale ───────────────────────────────────
-  //
-  // Priority: URL prefix > valid NEXT_LOCALE cookie > 'en'
-  // We deliberately ignore Accept-Language entirely.
-  // We also ignore a NEXT_LOCALE cookie that holds an invalid value.
-
-  const localeInUrl = getLocaleFromPath(pathname);
-
-  const cookieLocaleRaw = request.cookies.get('NEXT_LOCALE')?.value ?? '';
-  const cookieLocale: Locale | null = isValidLocale(cookieLocaleRaw)
-    ? cookieLocaleRaw
-    : null;
-
-  // If the URL already has a valid locale prefix, that is canonical — trust it.
-  // Otherwise fall back to cookie, then to 'en'.
-  const resolvedLocale: Locale = localeInUrl ?? cookieLocale ?? DEFAULT_LOCALE;
-
-  // ── Step 2: Redirect bare paths to /{locale}/... ──────────────────────────
-  //
-  // Visitor hits /              → redirect to /en/
-  // Visitor hits /courses       → redirect to /en/courses
-  // Visitor hits /pt-br/courses → no redirect (locale already in URL)
+  const localeInUrl  = getLocaleFromPath(pathname);
+  const cookieRaw    = request.cookies.get('NEXT_LOCALE')?.value ?? '';
+  const cookieLocale = isValidLocale(cookieRaw) ? cookieRaw : null;
+  const resolved: Locale = localeInUrl ?? cookieLocale ?? DEFAULT_LOCALE;
 
   if (!localeInUrl) {
     const redirectUrl = new URL(
-      `/${resolvedLocale}${pathname === '/' ? '' : pathname}`,
-      request.url,
+      `/${resolved}${pathname === '/' ? '' : pathname}`, request.url,
     );
-    // Copy query params
-    request.nextUrl.searchParams.forEach((value, key) => {
-      redirectUrl.searchParams.set(key, value);
-    });
-
-    const redirectResponse = NextResponse.redirect(redirectUrl, { status: 307 });
-
-    // Write the cookie so future requests land on the same locale
-    redirectResponse.cookies.set('NEXT_LOCALE', resolvedLocale, {
-      path:     '/',
-      maxAge:   60 * 60 * 24 * 365,
-      sameSite: 'lax',
-      httpOnly: false, // must be readable by the LanguageSwitcher (client JS)
-    });
-
-    return redirectResponse;
+    request.nextUrl.searchParams.forEach((v, k) => redirectUrl.searchParams.set(k, v));
+    const res = NextResponse.redirect(redirectUrl, { status: 307 });
+    setCookieLocale(res, resolved);
+    return res;
   }
 
-  // ── Step 3: Cookie hygiene ────────────────────────────────────────────────
-  //
-  // The URL has a locale prefix. Make sure the cookie matches it so there's
-  // never a mismatch between what the URL says and what the cookie says.
-
-  const needsCookieUpdate = request.cookies.get('NEXT_LOCALE')?.value !== localeInUrl;
-
-  // ── Step 4: Auth guard for protected routes ───────────────────────────────
-
-  const barePath = stripLocalePrefix(pathname);
+  const cookieNeedsUpdate = request.cookies.get('NEXT_LOCALE')?.value !== localeInUrl;
+  const barePath = stripLocale(pathname);
 
   if (!isProtectedPath(barePath)) {
-    // Public route — just pass through (+ fix cookie if needed)
-    const response = NextResponse.next();
-    if (needsCookieUpdate) {
-      response.cookies.set('NEXT_LOCALE', localeInUrl, {
-        path:     '/',
-        maxAge:   60 * 60 * 24 * 365,
-        sameSite: 'lax',
-        httpOnly: false,
-      });
-    }
-    return response;
+    const res = NextResponse.next();
+    if (cookieNeedsUpdate) setCookieLocale(res, localeInUrl);
+    return res;
   }
 
-  // Protected route — validate Supabase session
-  const response = NextResponse.next();
+  const res = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -152,10 +74,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+        // FIX: explicit CookieOptionsWithName[] removes implicit-any on destructure
+        setAll: (cookiesToSet: CookieOptionsWithName[]) => {
+          cookiesToSet.forEach(({ name, value, options }: any) =>
+            res.cookies.set(name, value, options),
+          );
         },
       },
     },
@@ -169,20 +92,9 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Authenticated — sync cookie if needed
-  if (needsCookieUpdate) {
-    response.cookies.set('NEXT_LOCALE', localeInUrl, {
-      path:     '/',
-      maxAge:   60 * 60 * 24 * 365,
-      sameSite: 'lax',
-      httpOnly: false,
-    });
-  }
-
-  return response;
+  if (cookieNeedsUpdate) setCookieLocale(res, localeInUrl);
+  return res;
 }
-
-// ── Matcher ───────────────────────────────────────────────────────────────────
 
 export const config = {
   matcher: [

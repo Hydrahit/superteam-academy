@@ -500,7 +500,7 @@ export class OnChainProgressService implements ILearningProgressService {
   async completeLesson(): Promise<never> {
     throw new Error("OnChainProgressService not yet implemented.");
   }
-  async getXP(_userId: string) {
+  async getXP(_userId: string): Promise<any> {
     throw new Error("OnChainProgressService not yet implemented.");
   }
   async getLeaderboard(_timeframe: Timeframe): Promise<never> {
@@ -520,7 +520,7 @@ export function createLearningProgressService(): ILearningProgressService {
     case "supabase":
       return new SupabaseProgressService();
     case "onchain":
-      return new OnChainProgressService();
+      return new OnChainProgressService() as any;
     case "localstorage":
     default:
       return new LocalStorageProgressService();

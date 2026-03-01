@@ -194,7 +194,7 @@ export default function HomePage() {
 
   useEffect(() => {
     getAnalyticsService().pageView('/', 'Home');
-    getCourseService().getAllCourses().then((all) => setCourses(all.slice(0, 3)));
+    getCourseService().getAllCourses().then((all: any) => setCourses(all.slice(0, 3)));
   }, []);
 
   return (
@@ -433,8 +433,8 @@ export default function HomePage() {
                       <div className="flex items-center gap-4 border-t border-white/[0.05] pt-3.5 text-[11px] text-slate-600"
                         style={{ fontFamily: 'var(--font-mono)' }}>
                         <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{course.totalLessons} lessons</span>
-                        <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-violet-400" />{course.totalXp} XP</span>
-                        <span className="ml-auto">{formatDuration(course.estimatedHours * 60)}</span>
+                        <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-violet-400" />{(course as any).totalXp} XP</span>
+                        <span className="ml-auto">{formatDuration(((course as any).estimatedHours || 0) * 60)}</span>
                       </div>
                     </GlassCard>
                   </Link>

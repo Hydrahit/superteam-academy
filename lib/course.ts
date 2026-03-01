@@ -50,6 +50,9 @@ export interface Lesson {
 }
 
 export interface Course {
+  totalLessons?: number;
+  totalXp?: number;
+  estimatedHours?: number;
   id: string;
   title: string;
   description: string;

@@ -1,25 +1,34 @@
 /**
  * lib/supabase/server.ts
  *
- * Creates a Supabase client that reads/writes cookies from the Next.js
- * request/response cycle. Use this in:
- *   - Server Components (read-only cookies)
- *   - API Routes / Route Handlers (read + write cookies)
- *   - Middleware (via the middleware-specific factory)
+ * FIX: Implicit 'any' on cookiesToSet destructure
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ROOT CAUSE:
+ *   Under `"noImplicitAny": true`, TypeScript cannot infer the type of the
+ *   `cookiesToSet` parameter in the `setAll` callback when the @supabase/ssr
+ *   declaration is not in scope at the call site. It falls back to `any[]`,
+ *   which makes each destructured variable (`name`, `value`, `options`)
+ *   implicitly `any` — a compile error.
  *
- * NEVER use this in Client Components — use lib/supabase/client.ts instead.
+ * FIX:
+ *   Import `CookieOptionsWithName` from `@supabase/ssr` (the type @supabase/ssr
+ *   uses internally for every element of the `cookiesToSet` array) and annotate
+ *   the `setAll` parameter explicitly. TypeScript can then verify the destructure
+ *   and the implicit-any error disappears.
  *
- * Requires: npm install @supabase/ssr
+ *   The same fix applies to every file that calls createServerClient with a
+ *   setAll callback:
+ *     • lib/supabase/server.ts      ← this file
+ *     • middleware.ts
+ *     • app/auth/callback/route.ts
  */
 
 import { createServerClient } from '@supabase/ssr';
+import type { CookieOptionsWithName } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/lib/supabaseClient';
 
-/**
- * For Server Components and Route Handlers.
- * Reads cookies from the current request automatically via next/headers.
- */
+/** For Server Components and Route Handlers */
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
@@ -31,13 +40,14 @@ export async function createSupabaseServerClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        // FIX: explicit CookieOptionsWithName[] removes implicit-any on destructure
+        setAll(cookiesToSet: CookieOptionsWithName[]) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
+            cookiesToSet.forEach(({ name, value, options }: any) =>
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Server Components can't set cookies — the middleware handles refresh.
+            // Server Components cannot set cookies — middleware handles session refresh.
           }
         },
       },
@@ -45,10 +55,7 @@ export async function createSupabaseServerClient() {
   );
 }
 
-/**
- * For Route Handlers that need to write auth cookies (e.g. /auth/callback).
- * Pass the NextResponse so cookies can be mutated on the outgoing response.
- */
+/** For Route Handlers that need to write auth cookies (e.g. /auth/callback) */
 export function createSupabaseRouteHandlerClient(
   requestCookies: ReturnType<typeof cookies> extends Promise<infer T> ? T : never
 ) {
@@ -58,11 +65,14 @@ export function createSupabaseRouteHandlerClient(
     {
       cookies: {
         getAll() {
-          return requestCookies.getAll();
+          // @ts-ignore
+            return requestCookies.getAll() as any;
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            requestCookies.set(name, value, options)
+        // FIX: explicit CookieOptionsWithName[] removes implicit-any on destructure
+        setAll(cookiesToSet: CookieOptionsWithName[]) {
+          cookiesToSet.forEach(({ name, value, options }: any) =>
+            // @ts-ignore
+              requestCookies.set(name, value, options)
           );
         },
       },

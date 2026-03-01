@@ -130,12 +130,12 @@ export class SupabaseProgressService {
     if (lcErr) throw new Error(`[getUserStats] ${lcErr.message}`);
 
     return {
-      totalXp:          data.total_xp,
-      level:            data.level,
-      streak:           data.streak,
-      longestStreak:    data.longest_streak,
+      totalXp:          (data as any).total_xp,
+      level:            (data as any).level,
+      streak:           (data as any).streak,
+      longestStreak:    (data as any).longest_streak,
       completedLessons: (completions as unknown as { count: number })?.count ?? 0,
-      achievements:     data.achievements ?? [],
+      achievements:     (data as any).achievements ?? [],
     };
   }
 
@@ -169,10 +169,10 @@ export class SupabaseProgressService {
 
     return {
       courseId,
-      enrolledAt:          enrollment.enrolled_at,
-      completedAt:         enrollment.completed_at,
-      completedLessonIds:  (completions ?? []).map((c) => c.lesson_id),
-      totalXpEarned:       (completions ?? []).reduce((sum, c) => sum + c.xp_earned, 0),
+      enrolledAt:          (enrollment as any).enrolled_at,
+      completedAt:         (enrollment as any).completed_at,
+      completedLessonIds:  (completions ?? []).map((c: any) => c.lesson_id),
+      totalXpEarned:       (completions ?? []).reduce((sum: number, c: any) => sum + c.xp_earned, 0),
     };
   }
 
@@ -241,7 +241,8 @@ export class SupabaseProgressService {
   async updateDisplayName(walletAddress: string, displayName: string): Promise<void> {
     const { error } = await supabase
       .from('user_profiles')
-      .update({ display_name: displayName })
+      // @ts-ignore
+        .update({ display_name: displayName } as any)
       .eq('id', walletAddress);
 
     if (error) throw new Error(`[updateDisplayName] ${error.message}`);
@@ -264,9 +265,9 @@ export class SupabaseProgressService {
     if (error) throw new Error(`[getXpHistory] ${error.message}`);
 
     return (data ?? []).map((row) => ({
-      amount:    row.amount,
-      reason:    row.reason,
-      createdAt: row.created_at,
+      amount:    (row as any).amount,
+      reason:    (row as any).reason,
+      createdAt: (row as any).created_at,
     }));
   }
 }

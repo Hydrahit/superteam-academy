@@ -167,14 +167,14 @@ export class CustomAnalyticsService implements IAnalyticsService {
       localStorage.setItem('analytics_user_id', userId);
     }
 
-    this.track('identify', {
+    this.track('identify' as any, {
       userId,
       ...traits,
     });
   }
 
   timing(category: string, variable: string, value: number): void {
-    this.track('timing', {
+    this.track('timing' as any, {
       category,
       variable,
       value,

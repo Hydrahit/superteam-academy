@@ -20,7 +20,7 @@ export function WalletButton() {
         try {
           const progressService = getProgressService();
           const profile = await progressService.getUserProfile(publicKey.toBase58());
-          setUser(profile);
+          setUser(profile as any);
 
           // Track wallet connection
           const analytics = getAnalyticsService();

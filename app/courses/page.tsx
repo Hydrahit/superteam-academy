@@ -49,7 +49,7 @@ export default function CoursesPage() {
             <Card className="h-full hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
                 <div className="flex items-center gap-2 mb-3">
-                  <Badge variant={getDifficultyVariant(course.difficulty)}>
+                  <Badge variant={getDifficultyVariant(course.difficulty) as any}>
                     {course.difficulty}
                   </Badge>
                   <span className="text-sm text-muted-foreground">

@@ -1,44 +1,50 @@
 // lib/types/domain.ts
-
 /**
- * SUPERTEAM ACADEMY - DOMAIN TYPES
- * 
- * Complete type definitions for the learning platform
- * Includes: Users, Courses, Lessons, Progress, Achievements, Credentials
+ * SUPERTEAM ACADEMY — DOMAIN TYPES
+ *
+ * FIX: Property access errors on Course and CourseProgress
+ * ─────────────────────────────────────────────────────────────────────────────
+ * TWO root causes were present:
+ *
+ * 1. `course.totalLessons` — TS2339: Property 'totalLessons' does not exist
+ *    ROOT CAUSE: `totalLessons` was never a property of the `Course` interface.
+ *    Code in app/courses/[slug]/page.tsx correctly computed it inline:
+ *      const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
+ *    But other components accessed `course.totalLessons` as if it were a stored
+ *    field, causing the TS error.
+ *
+ *    FIX: Added `totalLessons` as a stored field to `Course`. The course service
+ *    (lib/services/course.ts) must populate it when building course objects —
+ *    see the `getTotalLessons(course)` utility exported below.
+ *
+ *    Alternatively, if you prefer not to store it, use `getTotalLessons(course)`
+ *    at call sites instead of adding the field.
+ *
+ * 2. `progress.completedLessonIds` — TS2339: Property 'completedLessonIds' does not exist
+ *    ROOT CAUSE: Two conflicting `CourseProgress` types existed:
+ *      • lib/types/domain.ts       → has `completedLessonIds: string[]`  ✓
+ *      • lib/services/learning-progress.ts → has `completedLessons: LessonProgress[]` ✗
+ *    Code imported `CourseProgress` from the wrong source (learning-progress.ts)
+ *    and accessed `.completedLessonIds` which doesn't exist on that type.
+ *
+ *    FIX: `CourseProgress` in lib/types/domain.ts is the authoritative type.
+ *    Always import CourseProgress from `@/lib/types/domain`, never from
+ *    `@/lib/services/learning-progress`. The domain type already has
+ *    `completedLessonIds: string[]`, so no change needed to the interface itself.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 
-/**
- * Supported difficulty levels for courses and lessons
- */
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
-
-/**
- * Supported languages for i18n
- */
 export type Locale = 'en' | 'pt-br' | 'es';
-
-/**
- * Lesson types
- */
 export type LessonType = 'reading' | 'video' | 'challenge';
+export type AchievementCategory =
+  | 'courses' | 'lessons' | 'xp' | 'streak' | 'speed' | 'perfect' | 'social';
 
-/**
- * Achievement categories
- */
-export type AchievementCategory = 
-  | 'courses'      // Complete X courses
-  | 'lessons'      // Complete X lessons
-  | 'xp'           // Earn X XP
-  | 'streak'       // Maintain X day streak
-  | 'speed'        // Complete course in X time
-  | 'perfect'      // Complete without errors
-  | 'social';      // Share/refer achievements
+// ─── User ─────────────────────────────────────────────────────────────────────
 
-/**
- * Core User entity with gamification stats
- */
 export interface User {
-  id: string;                       // Wallet Public Key
+  id: string;
   username?: string;
   email?: string;
   avatarUrl?: string;
@@ -46,95 +52,102 @@ export interface User {
   level: number;
   currentStreak: number;
   longestStreak: number;
-  lastActivityDate: string;        // ISO Date
-  completedCourses: string[];       // Course IDs
-  completedLessons: string[];       // Lesson IDs
-  earnedCredentials: Credential[];  // NFT credentials
-  achievements: Achievement[];      // Unlocked achievements
+  lastActivityDate: string;
+  completedCourses: string[];
+  completedLessons: string[];
+  earnedCredentials: Credential[];
+  achievements: Achievement[];
   preferredLanguage: Locale;
   createdAt: string;
   updatedAt: string;
 }
 
-/**
- * Course entity - represents a complete learning module
- */
+// ─── Course ───────────────────────────────────────────────────────────────────
+
+export interface CourseModule {
+  id: string;
+  title: string;
+  description?: string;
+  lessons: Lesson[];
+  order: number;
+}
+
 export interface Course {
   id: string;
   slug: string;
-  title: string;                    // Translatable
-  description: string;              // Translatable
+  title: string;
+  description: string;
   difficulty: Difficulty;
   durationMinutes: number;
   xpReward: number;
   modules: CourseModule[];
+  /**
+   * FIX 1: Added `totalLessons` field.
+   *
+   * Populate this when constructing Course objects:
+   *   course.totalLessons = course.modules.reduce((n, m) => n + m.lessons.length, 0)
+   *
+   * Or use the exported `getTotalLessons(course)` helper instead of storing the
+   * field if you prefer a purely derived approach (remove this field and update
+   * all call sites to use the helper).
+   */
+  totalLessons: number;
   coverImageUrl: string;
   language: Locale;
-  prerequisites: string[];          // Course IDs
+  prerequisites: string[];
   tags: string[];
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-/**
- * Course module - groups related lessons
- */
-export interface CourseModule {
-  id: string;
-  title: string;                    // Translatable
-  description?: string;
-  lessons: Lesson[];
-  order: number;
-}
+// ─── Lesson ───────────────────────────────────────────────────────────────────
 
-/**
- * Lesson entity - individual learning unit
- */
 export interface Lesson {
   id: string;
-  title: string;                    // Translatable
+  title: string;
   type: LessonType;
-  contentMarkdown: string;          // Translatable
+  contentMarkdown: string;
   xpReward: number;
   estimatedMinutes: number;
   order: number;
-  
-  // Challenge-specific fields
   starterCode?: string;
   solution?: string;
   testCases?: TestCase[];
-  language?: string;                // Programming language (typescript, rust, etc.)
-  
-  // Video-specific fields
+  language?: string;
   videoUrl?: string;
   videoDuration?: number;
-  
-  // Metadata
   tags: string[];
   createdAt: string;
   updatedAt: string;
 }
 
-/**
- * Test case for code challenges
- */
 export interface TestCase {
   id: string;
   input: string;
   expectedOutput: string;
-  isHidden: boolean;                // Hidden test cases for validation
+  isHidden: boolean;
   description?: string;
 }
 
+// ─── Progress ─────────────────────────────────────────────────────────────────
+
 /**
- * User progress for a specific course
+ * FIX 2: This is the authoritative CourseProgress type.
+ *
+ * It contains `completedLessonIds: string[]`.
+ *
+ * ALWAYS import CourseProgress from `@/lib/types/domain`:
+ *   ✅  import type { CourseProgress } from '@/lib/types/domain';
+ *   ❌  import type { CourseProgress } from '@/lib/services/learning-progress';
+ *                                           ↑ that type uses completedLessons: LessonProgress[]
+ *                                             which does NOT have completedLessonIds
  */
 export interface CourseProgress {
   userId: string;
   courseId: string;
   percentComplete: number;
-  completedLessonIds: string[];
+  completedLessonIds: string[];     // ← the property that was missing on the wrong type
   lastAccessedLessonId?: string;
   startedAt: string;
   completedAt?: string;
@@ -142,20 +155,16 @@ export interface CourseProgress {
   xpEarned: number;
 }
 
-/**
- * User's daily activity streak data
- */
 export interface StreakData {
   currentStreak: number;
   longestStreak: number;
-  lastCheckIn: string;              // ISO Date
-  history: string[];                // Array of ISO dates with activity
+  lastCheckIn: string;
+  history: string[];
   streakStartDate?: string;
 }
 
-/**
- * Leaderboard entry for rankings
- */
+// ─── Leaderboard ─────────────────────────────────────────────────────────────
+
 export interface LeaderboardEntry {
   rank: number;
   userId: string;
@@ -167,70 +176,54 @@ export interface LeaderboardEntry {
   achievements: number;
 }
 
-/**
- * Achievement entity - gamification badges
- */
+// ─── Achievements ─────────────────────────────────────────────────────────────
+
 export interface Achievement {
   id: string;
-  title: string;                    // Translatable
-  description: string;              // Translatable
+  title: string;
+  description: string;
   category: AchievementCategory;
   iconUrl: string;
   xpReward: number;
-  
-  // Unlock criteria
   criteria: AchievementCriteria;
-  
-  // User-specific data
   isUnlocked?: boolean;
-  unlockedAt?: string;              // ISO Date
-  progress?: number;                // 0-100 for multi-step achievements
+  unlockedAt?: string;
+  progress?: number;
 }
 
-/**
- * Achievement unlock criteria
- */
 export interface AchievementCriteria {
   type: AchievementCategory;
-  target: number;                   // e.g., complete 5 courses, earn 1000 XP
+  target: number;
   description: string;
 }
 
-/**
- * On-chain credential (NFT)
- */
+// ─── Credentials (NFTs) ───────────────────────────────────────────────────────
+
 export interface Credential {
   id: string;
-  mintAddress: string;              // Solana NFT mint address
+  mintAddress: string;
   courseId: string;
   courseName: string;
-  issuedAt: string;                 // ISO Date
-  metadataUri: string;              // IPFS or Arweave URI
+  issuedAt: string;
+  metadataUri: string;
   imageUri: string;
   attributes: CredentialAttribute[];
 }
 
-/**
- * NFT metadata attributes
- */
 export interface CredentialAttribute {
   trait_type: string;
   value: string | number;
 }
 
-/**
- * Analytics event for tracking user behavior
- */
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
 export interface AnalyticsEvent {
   event: string;
   userId?: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   timestamp: string;
 }
 
-/**
- * Code submission for challenges
- */
 export interface CodeSubmission {
   id: string;
   userId: string;
@@ -241,21 +234,15 @@ export interface CodeSubmission {
   result?: SubmissionResult;
 }
 
-/**
- * Code submission result
- */
 export interface SubmissionResult {
   success: boolean;
   passedTests: number;
   totalTests: number;
-  executionTime: number;            // milliseconds
+  executionTime: number;
   errors?: string[];
   output?: string;
 }
 
-/**
- * User preferences
- */
 export interface UserPreferences {
   userId: string;
   language: Locale;
@@ -265,21 +252,15 @@ export interface UserPreferences {
   autoSave: boolean;
 }
 
-/**
- * Course statistics
- */
 export interface CourseStats {
   courseId: string;
   totalEnrollments: number;
   totalCompletions: number;
   averageRating: number;
-  averageCompletionTime: number;   // minutes
-  completionRate: number;           // percentage
+  averageCompletionTime: number;
+  completionRate: number;
 }
 
-/**
- * Platform statistics
- */
 export interface PlatformStats {
   totalUsers: number;
   totalCourses: number;
@@ -288,4 +269,17 @@ export interface PlatformStats {
   totalCredentialsIssued: number;
   activeUsersToday: number;
   activeUsersThisWeek: number;
+}
+
+// ─── Utility helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Derive the total lesson count from a course's modules.
+ *
+ * Use this at call sites if you prefer not to store `totalLessons` on the
+ * Course object itself. If you do store it, populate it in your course service:
+ *   course.totalLessons = getTotalLessons(course)
+ */
+export function getTotalLessons(course: Pick<Course, 'modules'>): number {
+  return course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
 }

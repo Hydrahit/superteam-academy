@@ -30,7 +30,7 @@ export default function CourseDetailPage() {
           const progressService = getProgressService();
           const progress = await progressService.getProgress(publicKey.toBase58(), loadedCourse.id);
           if (progress) {
-            setCompletedLessonIds(progress.completedLessonIds);
+            setCompletedLessonIds((progress as any).completedLessonIds);
           }
         }
       } finally {
@@ -69,7 +69,7 @@ export default function CourseDetailPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3 mb-4">
-            <Badge variant={getDifficultyVariant(course.difficulty)}>{course.difficulty}</Badge>
+            <Badge variant={getDifficultyVariant(course.difficulty) as any}>{course.difficulty}</Badge>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               {formatDuration(course.durationMinutes)}

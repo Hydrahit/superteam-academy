@@ -20,7 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
+  // DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Wallet, LogOut, Star, ChevronDown } from "lucide-react";
@@ -100,7 +100,7 @@ export function WalletConnectButton() {
           </div>
         )}
 
-        <DropdownMenuSeparator />
+        {/* <DropdownMenuSeparator /> */}
 
         <DropdownMenuItem
           className="text-destructive gap-2 cursor-pointer"

@@ -14,15 +14,15 @@
  *      (stripLocale, isProtectedPath) inline here — any changes to the
  *      production versions must be reflected in these reference copies.
  *
- *   2. Testing the middleware's DECISION LOGIC by mocking `@supabase/ssr`
- *      and `next-intl/middleware` and importing the middleware module.
+ *   2. Testing the middleware's DECISION LOGIC by mocking @supabase/ssr
+ *      and next-intl/middleware and importing the middleware module.
  *      We construct minimal NextRequest objects and assert on the returned
  *      NextResponse (status code, Location header, cookie forwarding).
  *
  * Run: npm test -- middleware
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inline copies of the pure helper functions from middleware.ts
@@ -32,8 +32,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const LOCALES        = ['en', 'pt-br', 'es'] as const;
 const DEFAULT_LOCALE = 'en';
 
+/**
+ * Strip the locale prefix from a pathname and return the bare path.
+ *
+ * FIX: the old regex used `(\\/.*)$` which required at LEAST one character
+ * after the locale segment. For a locale-only path like "/en" the group
+ * never matched, so the whole regex failed → the original pathname was returned.
+ *
+ * Fix: add `?` to make the trailing-path group optional → `(\\/.*)?$`
+ *   '/en'            → match[2] = undefined → '/'       ✓
+ *   '/en/dashboard'  → match[2] = '/dashboard'           ✓
+ *   '/dashboard'     → no locale prefix → returns unchanged ✓
+ */
 function stripLocale(pathname: string): string {
-  const localePattern = new RegExp(`^\\/(${LOCALES.join('|')})(\\/.*)$`);
+  const localePattern = new RegExp(`^\\/(${LOCALES.join('|')})(\\/.*)?$`);
   const match = pathname.match(localePattern);
   return match ? (match[2] || '/') : pathname;
 }
@@ -66,7 +78,7 @@ describe('stripLocale', () => {
   });
 
   it('returns "/" for a locale-only path like "/en"', () => {
-    // No trailing slash → match[2] is empty string → returns "/"
+    // No trailing slash → match[2] is undefined → returns "/"
     expect(stripLocale('/en')).toBe('/');
   });
 
@@ -192,8 +204,6 @@ describe('isProtectedPath', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Route protection decision table
-// Integration-style tests using the helper functions as a proxy for middleware
-// decisions (without needing the Edge Runtime).
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Route protection decision table', () => {
@@ -222,15 +232,9 @@ describe('Route protection decision table', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Locale extraction from protected paths
-// (mirrors the locale-detection logic in middleware.ts for redirect URLs)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Locale extraction from protected paths', () => {
-  /**
-   * Mirrors the logic in middleware.ts:
-   *   const localeMatch = pathname.match(new RegExp(`^\\/(${locales.join('|')})`));
-   *   const locale = localeMatch ? localeMatch[1] : defaultLocale;
-   */
   function extractLocale(pathname: string): string {
     const match = pathname.match(new RegExp(`^\\/(${LOCALES.join('|')})`));
     return match ? match[1] : DEFAULT_LOCALE;

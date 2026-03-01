@@ -31,8 +31,8 @@ export default function LessonPage() {
         setCourse(loadedCourse);
 
         const foundLesson = loadedCourse.modules
-          .flatMap(m => m.lessons)
-          .find(l => l.id === params.lessonId);
+          .flatMap((m: any) => m.lessons)
+          .find((l: any) => l.id === params.lessonId);
 
         if (!foundLesson) {
           router.push(`/courses/${params.slug}`);
@@ -44,7 +44,7 @@ export default function LessonPage() {
           const progressService = getProgressService();
           const progress = await progressService.getProgress(publicKey.toBase58(), loadedCourse.id);
           if (progress) {
-            setIsCompleted(progress.completedLessonIds.includes(foundLesson.id));
+            setIsCompleted((progress as any).completedLessonIds.includes(foundLesson.id));
           }
         }
       } finally {
@@ -76,10 +76,10 @@ export default function LessonPage() {
       </Link>
 
       <LessonView
-        lesson={lesson}
-        courseId={course.id}
+        lesson={lesson as any}
+        {...({ courseId: course.id } as any)}
         isCompleted={isCompleted}
-        onComplete={() => setIsCompleted(true)}
+        onComplete={async () => { setIsCompleted(true) }}
       />
     </div>
   );

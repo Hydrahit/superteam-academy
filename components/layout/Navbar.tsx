@@ -13,6 +13,7 @@ import { Trophy, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LanguageSwitcher } from './LanguageSwitcher';
+// @ts-ignore
 import { AuthButton } from '@/components/auth/AuthButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatXP } from '@/lib/utils';

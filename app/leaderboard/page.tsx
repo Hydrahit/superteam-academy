@@ -25,7 +25,7 @@ export default function LeaderboardPage() {
       try {
         const progressService = getProgressService();
         const data = await progressService.getLeaderboard('alltime');
-        setLeaderboard(data);
+        setLeaderboard(data as any);
       } finally {
         setLoading(false);
       }

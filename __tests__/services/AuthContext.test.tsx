@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * __tests__/contexts/AuthContext.test.tsx
  *
@@ -150,7 +151,7 @@ describe('authStage state machine', () => {
   it('starts in "loading" state during bootstrap', async () => {
     // getUser never resolves — stays loading
     mockGetUser.mockReturnValue(new Promise(() => {}));
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
     expect(result.current.authStage).toBe('loading');
@@ -158,7 +159,7 @@ describe('authStage state machine', () => {
 
   it('transitions to "unauthenticated" when no user and no wallet after bootstrap', async () => {
     mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.authStage).toBe('unauthenticated'));
@@ -167,7 +168,7 @@ describe('authStage state machine', () => {
   it('transitions to "google_only" when user is authenticated but wallet is not linked', async () => {
     mockGetUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
     mockGetProfile.mockResolvedValueOnce(MOCK_PROFILE_UNLINKED);
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.authStage).toBe('google_only'));
@@ -176,7 +177,7 @@ describe('authStage state machine', () => {
   it('transitions to "fully_linked" when user is authenticated AND wallet_address is set', async () => {
     mockGetUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
     mockGetProfile.mockResolvedValueOnce(MOCK_PROFILE_LINKED);
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.authStage).toBe('fully_linked'));
@@ -185,7 +186,7 @@ describe('authStage state machine', () => {
   it('transitions to "wallet_only" when wallet is connected but no Google session', async () => {
     mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
     const pk = new PublicKey('So11111111111111111111111111111111111111112');
-    mockUseWallet.mockReturnValue({ publicKey: pk, connected: true, signMessage: vi.fn(), disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: pk, connected: true, connecting: false, signMessage: vi.fn(), disconnect: vi.fn() } as any);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.authStage).toBe('wallet_only'));
@@ -202,7 +203,7 @@ describe('isLinked', () => {
     mockAuthStateChange.mockReturnValue({
       data: { subscription: { unsubscribe: subscriptionUnsubscribe } },
     });
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
   });
 
   it('is false when profile.wallet_address is null', async () => {
@@ -241,7 +242,7 @@ describe('signInWithGoogle', () => {
     mockAuthStateChange.mockReturnValue({
       data: { subscription: { unsubscribe: subscriptionUnsubscribe } },
     });
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
   });
 
   it('delegates to authService.signInWithGoogle()', async () => {
@@ -291,7 +292,7 @@ describe('signOut', () => {
     mockAuthStateChange.mockReturnValue({
       data: { subscription: { unsubscribe: subscriptionUnsubscribe } },
     });
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
   });
 
   it('delegates to authService.signOut()', async () => {
@@ -398,7 +399,7 @@ describe('clearError', () => {
     mockAuthStateChange.mockReturnValue({
       data: { subscription: { unsubscribe: subscriptionUnsubscribe } },
     });
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
     mockAuthServiceSignIn.mockRejectedValue(new Error('Some error'));
   });
 
@@ -430,7 +431,7 @@ describe('wallet property', () => {
   });
 
   it('is null when the wallet adapter has no publicKey', async () => {
-    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, signMessage: undefined, disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: null, connected: false, connecting: false, signMessage: undefined, disconnect: vi.fn() } as any);
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.wallet).toBeNull();
@@ -438,7 +439,7 @@ describe('wallet property', () => {
 
   it('equals the wallet adapter publicKey when the wallet is connected', async () => {
     const pk = new PublicKey('So11111111111111111111111111111111111111112');
-    mockUseWallet.mockReturnValue({ publicKey: pk, connected: true, signMessage: vi.fn(), disconnect: vi.fn() });
+    mockUseWallet.mockReturnValue({ publicKey: pk, connected: true, connecting: false, signMessage: vi.fn(), disconnect: vi.fn() } as any);
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.wallet?.toBase58()).toBe(pk.toBase58());

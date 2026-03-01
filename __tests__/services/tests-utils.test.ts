@@ -170,7 +170,7 @@ describe('Utility Functions', () => {
     it('should reject invalid addresses', () => {
       expect(isValidSolanaAddress('')).toBe(false);
       expect(isValidSolanaAddress('short')).toBe(false);
-      expect(isValidSolanaAddress('0' * 100)).toBe(false); // Too long
+      expect(isValidSolanaAddress('0'.repeat(100))).toBe(false); // Too long
       expect(isValidSolanaAddress('invalid!chars@')).toBe(false);
     });
 
