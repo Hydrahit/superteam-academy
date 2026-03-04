@@ -12,7 +12,7 @@
 ### ✨ New Files Added
 
 ```
-components/providers/WalletProvider.tsx   ← Full wallet adapter setup
+components/providers/WalletPr.tsx   ← Full wallet adapter setup
 components/wallet/WalletConnectButton.tsx ← Drop-in connect button + XP display
 lib/services/learning-progress.ts        ← ILearningProgressService + all impls
 lib/services/course.ts                   ← Fixed course service

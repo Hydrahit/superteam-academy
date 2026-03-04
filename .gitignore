@@ -30,7 +30,7 @@ lerna-debug.log*
 
 # IDEs
 .vscode/*
-!.vscode/extensions.json
+!.vscodeextensions.json
 .idea/
 *.swp
 *.swo

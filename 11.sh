@@ -12,7 +12,7 @@ if [ -f "tailwind.config.ts" ]; then
 fi
 
 if [ -f "tailwind.config.js" ]; then
-    cp "tailwind.config.js" "$BACKUP_DIR/"
+    cp "taiwind.config.js" "$BACKUP_DIR/"
     rm "tailwind.config.js"
     echo "✓ Removed duplicate: tailwind.config.js"
 fi

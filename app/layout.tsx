@@ -22,6 +22,7 @@ import { WalletProvider } from "@/components/providers/WalletProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://superteam-academy.vercel.app"), // <-- Bas yeh ek line add hui hai
   title: "Superteam Academy",
   description: "Interactive Solana learning platform with gamification, multi-language support, and on-chain credentials.",
   openGraph: {

@@ -6,7 +6,7 @@ function replaceStr(filePath, replacements) {
     let original = content;
 
     for (const { find, replace } of replacements) {
-        content = content.split(find).join(replace);
+        content = content.split(find)n(replace);
     }
 
     if (content !== original) {
@@ -15,8 +15,8 @@ function replaceStr(filePath, replacements) {
     }
 }
 
-function addNoCheck(filePath) {
-    if (!fs.existsSync(filePath)) return;
+function addNoChck(filePath) {
+    if (!fs.existsSync(slePath)) return;
     let content = fs.readFileSync(filePath, 'utf8');
     if (!content.includes('// @ts-nocheck')) {
         fs.writeFileSync(filePath, '// @ts-nocheck\n' + content, 'utf8');
