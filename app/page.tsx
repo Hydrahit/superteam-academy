@@ -106,15 +106,27 @@ export default function HomePage() {
   const [courses, setCourses] = useState<Course[]>([]);
 
   useEffect(() => {
-    getAnalyticsService().pageView('/', 'Home');
-    getCourseService().getAllCourses().then((all: any) => setCourses(all.slice(0, 3)));
+    
+    try {
+      const analytics = getAnalyticsService();
+      if (analytics && typeof analytics.pageView === 'function') analytics.pageView('/', 'Home');
+    } catch(e) {}
+    
+    
+    try {
+      const courseService = getCourseService();
+      if (courseService && typeof courseService.getAllCourses === 'function') {
+        courseService.getAllCourses().then((all: any) => {
+          if (all && all.slice) setCourses(all.slice(0, 3));
+        }).catch(e => console.warn("API Error:", e));
+      }
+    } catch(e) { console.warn("Service missing:", e); }
+    
   }, []);
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
-      `}</style>
+      
 
       <div className="relative min-h-screen overflow-x-hidden bg-[#060608] text-[#f0f0f0] antialiased scanlines-overlay font-['Bricolage_Grotesque']">
         <CinematicOrbs />
