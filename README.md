@@ -1,428 +1,233 @@
-# 🏆 Superteam Academy — Updated Feb 2026 - Complete Learning Platform
+# 🎓 Superteam Academy
 
-![Status](https://img.shields.io/badge/status-production--ready-success)
-![Tests](https://img.shields.io/badge/tests-50%20passing-success)
-![Security](https://img.shields.io/badge/security-A+-success)
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+> **A Web3 Learning Management System built on Solana — soulbound XP tokens, on-chain credentials, and gamified progress for the LATAM developer community.**
 
-> **Interactive Solana learning platform with gamification, multi-language support, and on-chain credentials**
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-superteam--academy.vercel.app-6366f1?style=for-the-badge)](https://superteam-academy.vercel.app)
+[![PR #70](https://img.shields.io/badge/PR-%2370-green?style=for-the-badge&logo=github)](https://github.com/solanabr/superteam-academy/pull/70)
+[![Next.js](https://img.shields.io/badge/Next.js_14-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=for-the-badge&logo=typescript)](https://typescriptlang.org)
+[![Tests](https://img.shields.io/badge/Tests-283_passing-22c55e?style=for-the-badge)](https://vitest.dev)
+[![i18n](https://img.shields.io/badge/i18n-EN_|_PT--BR_|_ES-f59e0b?style=for-the-badge)](https://next-intl-docs.vercel.app)
 
 ---
 
-## 📖 Quick Links
+## 🌐 Live Demo
 
-- [Setup Guide](./SETUP_GUIDE.md) - Complete step-by-step instructions
-- [Security Audit](./SECURITY_AUDIT.md) - Comprehensive security analysis
-- [Project Structure](./PROJECT_STRUCTURE.md) - Architecture overview
-- [Complete Winner Guide](./COMPLETE_WINNER.md) - Feature showcase
+**→ [https://superteam-academy.vercel.app](https://superteam-academy.vercel.app)**
+
+Connect any Solana wallet (Phantom / Solflare) on **Devnet** — no real SOL needed.
+
+---
+
+## 🏗️ Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    FRONTEND (this repo)                  │
+│         Next.js 14 App Router · TypeScript · Tailwind    │
+├─────────────────────────────────────────────────────────┤
+│  Auth Layer        │  Supabase Auth (Google OAuth)       │
+│                    │  Ed25519 wallet signature verify     │
+│                    │  HttpOnly cookie sessions (@supabase/ssr) │
+├─────────────────────────────────────────────────────────┤
+│  On-chain Layer    │  Token-2022 XP tokens (soulbound)   │
+│                    │  Metaplex Core NFT credentials       │
+│                    │  Course PDAs + Enrollment PDAs       │
+│                    │  256-bit lesson bitmap per learner   │
+├─────────────────────────────────────────────────────────┤
+│  Off-chain Layer   │  Supabase PostgreSQL                 │
+│                    │  Helius DAS API (leaderboard)        │
+│                    │  Streaks + achievements (frontend)   │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## ✨ Features
 
-### 🎮 Gamification
-- **XP System** - Earn experience points for completing lessons
-- **Levels** - Progress through levels (Level = √(XP/100))
-- **Streaks** - Maintain daily learning streaks
-- **Achievements** - Unlock 8 achievements as you progress
-- **Leaderboard** - Compete with other learners
+### 🪙 On-chain Gamification (per spec)
+| Feature | Implementation |
+|---|---|
+| **XP Tokens** | Token-2022 `NonTransferable` (soulbound). Wallet balance = XP |
+| **Levels** | `Level = floor(√(xp / 100))` — derived, never stored |
+| **Credentials** | Metaplex Core NFTs with `PermanentFreezeDelegate` — upgraded **in-place**, no wallet clutter |
+| **Course PDAs** | On-chain program-derived accounts per course |
+| **Enrollment PDAs** | Per-learner, closeable after completion to reclaim rent |
+| **Lesson Progress** | 256-bit bitmap — up to 256 lessons per course, gas-efficient |
+| **Achievements** | 256-bit bitmap, each backed by a soulbound Core NFT |
+| **Leaderboard** | Off-chain — Helius DAS API indexes XP token balances |
+| **Streaks** | Frontend-only — localStorage + Supabase (per spec) |
 
-### 💻 Interactive Learning
-- **Monaco Editor** - Full VS Code experience in browser
-- **Code Challenges** - Write and test Solana programs
-- **Test Cases** - Automated testing of your code
-- **Syntax Highlighting** - Beautiful code display
-- **Real-time Feedback** - Instant test results
+### 🔐 Authentication
+- Google OAuth via Supabase Auth
+- Wallet linking with **Ed25519 signature verification** on the server
+- Zero trust: JWT validated server-side on every protected route
+- HttpOnly cookie sessions — XSS resistant
 
-### 🌍 Multi-language Support
-- **English** - Full UI and content
-- **Portuguese (PT-BR)** - Complete Brazilian Portuguese support
-- **Spanish (ES)** - Full Spanish translations
-- **Easy Switching** - Change language with one click
+### 🌎 Internationalization
+Full EN / PT-BR / ES support via `next-intl` — every string translated, locale persists across sessions.
 
-### 🎓 On-Chain Credentials
-- **NFT Certificates** - Verifiable completion certificates
-- **Metaplex Integration** - Ready for NFT minting
-- **Wallet-based** - Owned by learners forever
-- **Shareable** - Prove your skills anywhere
+### 📊 Dashboard
+- Real-time XP + level display
+- Streak tracker with visual history
+- Achievement showcase
+- Course progress overview
 
-### 📊 Analytics
-- **Google Analytics** - Track user behavior
-- **Custom Events** - Lesson completions, code runs, achievements
-- **Privacy-friendly** - No PII collected
-- **Performance Monitoring** - Track engagement
+---
 
-### 🏗️ Architecture
-- **Service Repository Pattern** - Clean, maintainable code
-- **Mock/OnChain Switch** - One variable changes everything
-- **TypeScript** - Fully typed, strict mode
-- **Tests** - 50+ comprehensive tests
-- **Production-ready** - Secure, scalable, performant
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript (strict, 0 errors) |
+| Styling | Tailwind CSS + shadcn/ui |
+| Auth | Supabase Auth + @supabase/ssr |
+| Wallet | @solana/wallet-adapter (Wallet Standard) |
+| On-chain | Anchor · Token-2022 · Metaplex Core |
+| Indexing | Helius DAS API |
+| Database | Supabase PostgreSQL |
+| Testing | Vitest + @testing-library/react |
+| i18n | next-intl |
+| Deployment | Vercel |
+
+---
+
+## 🧪 Test Coverage
+
+**283 tests · ~90% coverage**
+
+| Module | Tests | Coverage |
+|---|---|---|
+| `lib/utils.ts` | 55 | 100% |
+| `lib/auth-service.ts` | 38 | ~95% |
+| `MockLearningProgressService` | 52 | ~90% |
+| `SupabaseProgressService` | 35 | ~95% |
+| `middleware.ts` | 28 | ~85% |
+| `app/api/auth/link-wallet` | 25 | ~95% |
+| `contexts/AuthContext` | 24 | ~80% |
+| Integration tests | 26 | — |
+
+```bash
+npm test              # run all 283 tests
+npm run test:coverage # full coverage report
+```
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js v20+
-- npm v10+
-- Solana wallet (Phantom/Solflare/Backpack)
+- Node.js 20+
+- A Phantom or Solflare wallet (switch to **Devnet**)
 
-### Installation
+### Setup
 
 ```bash
-# 1. Clone or create project
-npx create-next-app@14.1.0 superteam-academy
+# 1. Clone
+git clone https://github.com/Hydrahit/superteam-academy
 cd superteam-academy
 
-# 2. Copy all project files (see SETUP_GUIDE.md)
-
-# 3. Install dependencies
+# 2. Install
 npm install
 
-# 4. Run verification (optional)
-node verify-setup.js
+# 3. Configure environment
+cp .env.example .env.local
+```
 
-# 5. Start development server
+**.env.local minimum config:**
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_BACKEND=supabase
+```
+
+```bash
+# 4. Run
 npm run dev
-
-# 6. Open http://localhost:3000
-```
-
-### Verify Setup
-
-```bash
-# Run verification script
-node verify-setup.js
-
-# Expected: ✅ VERIFICATION PASSED!
+# → http://localhost:3000
 ```
 
 ---
 
-## 📂 Project Structure
+## 📁 Project Structure
 
 ```
-superteam-academy/
-├── app/                    # Next.js App Router pages
-│   ├── layout.tsx         # Root layout with providers
-│   ├── page.tsx           # Landing page
-│   ├── courses/           # Course pages
-│   ├── leaderboard/       # Leaderboard page
-│   └── (platform)/        # Protected routes
-│
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   ├── providers/        # Context providers
-│   ├── wallet/           # Wallet components
-│   ├── layout/           # Layout components
-│   └── lesson/           # Lesson components
-│
-├── lib/                  # Core library
-│   ├── types/           # TypeScript types
-│   ├── services/        # Business logic ⭐
-│   ├── store/           # State management
-│   └── utils.ts         # Utility functions
-│
-├── messages/            # i18n translations
-│   ├── en.json
-│   ├── pt-br.json
-│   └── es.json
-│
-└── __tests__/           # Test files
+onchain-academy/app/
+├── app/                        # Next.js App Router pages
+│   ├── (platform)/dashboard/   # Protected dashboard
+│   ├── courses/[slug]/         # Course pages
+│   │   └── lessons/[lessonId]/ # Lesson viewer
+│   ├── leaderboard/            # Global leaderboard
+│   └── api/auth/               # Auth API routes
+├── components/
+│   ├── lesson/LessonView.tsx   # Monaco editor + lesson UI
+│   ├── wallet/WalletButton.tsx # Wallet connect + XP display
+│   └── auth/AuthButton.tsx     # Full auth state machine
+├── contexts/
+│   └── AuthContext.tsx         # Global auth state (5 stages)
+├── lib/
+│   ├── auth-service.ts         # Google OAuth + wallet linking
+│   ├── services/               # Learning progress service layer
+│   │   ├── index.ts            # Service factory (mock/supabase/onchain)
+│   │   ├── learning-progress.ts# Core service + MockService
+│   │   └── SupabaseProgressService.ts
+│   └── supabase/               # Server + browser Supabase clients
+├── middleware.ts               # Auth guard + i18n routing
+└── messages/                   # EN / PT-BR / ES translations
+    ├── en.json
+    ├── pt-br.json
+    └── es.json
 ```
 
 ---
 
-## 🎯 Key Technologies
-
-### Frontend
-- **Next.js 14** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **shadcn/ui** - Beautiful component library
-- **Framer Motion** - Smooth animations
-
-### Solana Integration
-- **@solana/wallet-adapter-react** - Wallet connection
-- **@solana/web3.js** - Blockchain interaction
-- **Phantom, Solflare, Backpack** - Wallet support
-
-### Editor & Content
-- **Monaco Editor** - VS Code in browser
-- **react-markdown** - Markdown rendering
-- **react-syntax-highlighter** - Code highlighting
-
-### State & i18n
-- **Zustand** - Simple state management
-- **next-intl** - Internationalization
-
-### Testing
-- **Vitest** - Fast unit testing
-- **React Testing Library** - Component testing
-
----
-
-## 🧪 Testing
-
-### Run All Tests
-
-```bash
-npm test
-```
-
-**Expected output:**
-```
-✓ __tests__/services/learning-progress.test.ts (50 tests)
-✓ __tests__/utils.test.ts (40 tests)
-
- Test Files  2 passed (2)
-      Tests  90 passed (90)
-```
-
-### Test Coverage
-
-```bash
-npm run test:coverage
-```
-
-### Type Check
-
-```bash
-npm run type-check
-```
-
-### Lint
-
-```bash
-npm run lint
-```
-
----
-
-## 🔒 Security
-
-### Security Score: **A+**
-
-- ✅ No private key handling
-- ✅ XSS protection (React auto-escape)
-- ✅ No code injection vulnerabilities
-- ✅ Safe dependency tree
-- ✅ GDPR compliant
-- ✅ Privacy-friendly analytics
-
-See [SECURITY_AUDIT.md](./SECURITY_AUDIT.md) for full report.
-
----
-
-## 🌐 Internationalization
-
-### Supported Languages
-
-- **English (en)** - Default
-- **Portuguese (pt-br)** - Brazilian Portuguese
-- **Spanish (es)** - Latin American Spanish
-
-### Adding New Languages
-
-1. Create `messages/{locale}.json`
-2. Copy structure from `en.json`
-3. Translate all strings
-4. Add to `i18n.ts` locales array
-
----
-
-## 🏗️ Architecture Highlights
+## 🔑 Key Design Decisions
 
 ### Service Repository Pattern
-
-**The key innovation:**
-
+One interface, three implementations — switch with a single env var:
 ```typescript
-// Single interface
-interface ILearningProgressService {
-  getUserProfile(userId: string): Promise<User>;
-  completeLesson(...): Promise<void>;
-}
-
-// Two implementations
-class MockService implements ILearningProgressService { }
-class OnChainService implements ILearningProgressService { }
-
-// Switch with ONE environment variable
-NEXT_PUBLIC_USE_ON_CHAIN=false  // Mock
-NEXT_PUBLIC_USE_ON_CHAIN=true   // OnChain
+NEXT_PUBLIC_BACKEND=mock       // instant dev, no DB
+NEXT_PUBLIC_BACKEND=supabase   // production backend
+NEXT_PUBLIC_BACKEND=onchain    // full Solana integration
 ```
 
-**Benefits:**
-- ✅ Fast development with mock data
-- ✅ Zero UI changes when switching
-- ✅ Easy testing
-- ✅ Production-ready architecture
+### Zero-Trust Auth
+```typescript
+// ❌ Never do this
+const { session } = await supabase.auth.getSession()
 
----
-
-## 📊 Statistics
-
-### Codebase
-- **46 files** - Complete implementation
-- **8,400+ lines** - Production-grade code
-- **50+ tests** - Comprehensive coverage
-- **90+ components** - Modular design
-
-### Features
-- **8 achievements** - Gamification system
-- **3 languages** - Full i18n support
-- **12 courses** - Sample content
-- **50+ lessons** - Learning material
-
----
-
-## 🚢 Deployment
-
-### Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# Set environment variables in dashboard
+// ✅ Always validate JWT on the server
+const { data: { user } } = await supabase.auth.getUser()
 ```
 
-### Environment Variables
+### Ed25519 Wallet Verification
+The wallet link flow proves ownership cryptographically — the server verifies the signature before writing to DB. Replay attacks are prevented by embedding the user ID + timestamp in the signed message.
 
-**Required for production:**
-```env
-NEXT_PUBLIC_USE_ON_CHAIN=true
-NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
-NEXT_PUBLIC_SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-NEXT_PUBLIC_PROGRAM_ID=<your_program_id>
-NEXT_PUBLIC_GA_MEASUREMENT_ID=<your_ga_id>
+---
+
+## 🌍 Internationalization
+
+Every page is fully translated:
+```
+/en/courses     → English
+/pt-br/courses  → Português
+/es/courses     → Español
 ```
 
----
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Port already in use:**
-```bash
-npx kill-port 3000
-```
-
-**Dependencies missing:**
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**TypeScript errors:**
-```bash
-npm run type-check
-# Fix errors, then restart
-```
-
-**Wallet not connecting:**
-- Check wallet extension is installed
-- Switch to Devnet
-- Refresh page
-
-See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for more troubleshooting.
+Language detection priority: URL prefix → cookie → `en` (never Accept-Language header, to avoid stale-cookie bugs).
 
 ---
 
-## 📚 Documentation
+## 👤 Author
 
-### For Developers
-- [Setup Guide](./SETUP_GUIDE.md) - Complete installation
-- [Project Structure](./PROJECT_STRUCTURE.md) - Architecture
-- [Security Audit](./SECURITY_AUDIT.md) - Security analysis
+**Hydrahit** — [@Hydrahit_nad on X](https://x.com/Hydrahit_nad)
 
-### For Users
-- [How to Run](./HOW_TO_RUN.md) - Quick start
-- [Complete Winner](./COMPLETE_WINNER.md) - Feature showcase
+Submission for the [Superteam Brazil Academy Bounty](https://earn.superteam.fun)
 
 ---
 
-## 🤝 Contributing
+## 📄 License
 
-This is an open-source learning platform. Contributions welcome!
-
-### Areas for Contribution
-- Additional courses
-- New achievements
-- UI improvements
-- Bug fixes
-- Documentation
-- Translations
-
----
-
-## 📜 License
-
-MIT License - See LICENSE file
-
----
-
-## 🏆 Bounty Information
-
-**Built for:** [Superteam Academy Bounty](https://superteam.fun/earn/listing/superteam-academy/)
-
-**Requirements Met:**
-- ✅ Interactive code editing (Monaco Editor)
-- ✅ Gamification (XP, streaks, achievements)
-- ✅ On-chain credentials (Metaplex ready)
-- ✅ Multi-language (EN, PT, ES)
-- ✅ Analytics integration
-- ✅ Open-source & forkable
-- ✅ Progress tracking
-
-**Prize:** $4,800
-
----
-
-## 🎉 Acknowledgments
-
-- **Solana Foundation** - Blockchain infrastructure
-- **Superteam** - Community and support
-- **Next.js Team** - Amazing framework
-- **shadcn/ui** - Beautiful components
-- **Monaco Editor** - VS Code in browser
-
----
-
-## 📞 Support
-
-### Getting Help
-1. Check [SETUP_GUIDE.md](./SETUP_GUIDE.md)
-2. Review [SECURITY_AUDIT.md](./SECURITY_AUDIT.md)
-3. Read error messages carefully
-4. Check browser console
-
-### Contact
-- GitHub Issues (for bugs)
-- Discord (for questions)
-- Email (for support)
-
----
-
-## 🚀 Next Steps
-
-1. **Complete setup** - Follow SETUP_GUIDE.md
-2. **Run verification** - `node verify-setup.js`
-3. **Test all features** - Connect wallet, complete lessons
-4. **Deploy** - Push to production
-5. **Submit bounty** - WIN! 🏆
-
----
-
-**Built with ❤️ for the Solana community**
-
-**Status:** Production Ready ✅  
-**Tests:** 90 Passing ✅  
-**Security:** A+ ✅  
-**Ready to WIN:** YES! 🏆
+MIT — see [LICENSE](./LICENSE)
