@@ -1,80 +1,41 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🏗️  Building Project Brain & Structure...');
+console.log('🚀 Preparing Superteam Academy for Production Deployment...');
 
 const rootDir = process.cwd();
 
-// 1. Core Folders Structure
-const dirs = [
-  'contexts',          // For Auth, Theme, and Language states
-  'lib/hooks',         // Custom React hooks (useProgram, useXp)
-  'lib/services',      // Business logic (Course fetching, NFT minting)
-  'lib/providers',     // Combined Wallet & Auth providers
-  'app/api/actions'    // Next.js Server Actions for secure tasks
-];
+// 1. Create a Production .env.example
+const envContent = `# Solana Program Configuration
+NEXT_PUBLIC_PROGRAM_ID=ACADemy111111111111111111111111111111111111
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
-dirs.forEach(dir => {
-  const fullPath = path.join(rootDir, dir);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
-    console.log(`✅ Created: ${dir}`);
-  }
-});
+# Helius DAS API (Get yours at helius.dev)
+HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_KEY_HERE
 
-// 2. The Global Brain Context (Auth + State)
-const contextContent = `'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface GlobalState {
-  userXp: number;
-  level: number;
-  isLinked: boolean;
-}
-
-const BrainContext = createContext<any>(null);
-
-export function BrainProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<GlobalState>({
-    userXp: 0,
-    level: 1,
-    isLinked: false
-  });
-
-  // Level Logic: Level = floor(sqrt(xp / 100))
-  const updateXp = (newXp: number) => {
-    const newLevel = Math.floor(Math.sqrt(newXp / 100)) || 1;
-    setState(prev => ({ ...prev, userXp: newXp, level: newLevel }));
-  };
-
-  return (
-    <BrainContext.Provider value={{ ...state, updateXp }}>
-      {children}
-    </BrainContext.Provider>
-  );
-}
-
-export const useBrain = () => useContext(BrainContext);
+# Analytics & Monitoring
+NEXT_PUBLIC_POSTHOG_KEY=your_key
+NEXT_PUBLIC_SENTRY_DSN=your_dsn
 `;
-fs.writeFileSync(path.join(rootDir, 'contexts/BrainContext.tsx'), contextContent);
+fs.writeFileSync(path.join(rootDir, '.env.example'), envContent);
 
-// 3. Centralized Service Interface
-const serviceContent = `/**
- * Service Layer: Your UI calls this, this calls the Chain/CMS
- */
-export class AcademyService {
-  static async getCourseProgress(wallet: string, courseId: string) {
-    // Logic to fetch PDA or LocalStorage
-    console.log("Fetching progress for:", courseId);
-    return { completed: 0, total: 10 };
-  }
-
-  static async syncXpOnChain(wallet: string, amount: number) {
-    // Logic for Token-2022 minting/transfer
-    console.log("Syncing XP to Chain...");
-  }
+// 2. Final Build Script to clear cache before Vercel build
+const packageJsonPath = path.join(rootDir, 'package.json');
+if (fs.existsSync(packageJsonPath)) {
+    let pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    pkg.scripts["vercel-build"] = "node repair-all.js && next build";
+    fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2), 'utf8');
 }
-`;
-fs.writeFileSync(path.join(rootDir, 'lib/services/academy.ts'), serviceContent);
 
-console.log('\\n🎉 BRAIN INITIALIZED. Structure is now production-ready.');
+// 3. Create a Deployment Summary for the User
+const summaryContent = `
+# 🏁 Deployment Checklist for Om Dubey
+
+1. **Vercel Dashboard**: Go to Project Settings > Environment Variables.
+2. **Add Variables**: Copy keys from .env.example and paste your real Helius/Program IDs.
+3. **Connect Wallet**: Ensure your Samsung F34 5G has a compatible Solana wallet (Phantom/Solflare).
+4. **Push to Main**: Git push origin main to trigger the final production build.
+`;
+fs.writeFileSync(path.join(rootDir, 'DEPLOYMENT_GUIDE.md'), summaryContent);
+
+console.log('\\n✅ PRODUCTION READY. Environment template and build scripts updated.');
