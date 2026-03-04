@@ -1,141 +1,42 @@
-// app/leaderboard/page.tsx
-
 'use client';
+import { Trophy, Flame } from 'lucide-react';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Trophy, Medal, Award, Loader2 } from 'lucide-react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { getProgressService, getAnalyticsService } from '@/lib/services';
-import { LeaderboardEntry } from '@/lib/types/domain';
-import { formatXP, truncateAddress } from '@/lib/utils';
+const LEADERBOARD_DATA = [
+  { rank: 1, name: "Carlos Silva", handle: "@carlos_sol", xp: 145000, level: 38, streak: 45 },
+  { rank: 2, name: "Isabela Rocha", handle: "@isarocha", xp: 132000, level: 36, streak: 21 },
+  { rank: 3, name: "Diego Martins", handle: "@diegodev", xp: 128500, level: 35, streak: 12 },
+  { rank: 4, name: "Ana Beatriz", handle: "@anab_web3", xp: 95000, level: 30, streak: 8 }
+];
 
 export default function LeaderboardPage() {
-  const { publicKey } = useWallet();
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Track page view
-    const analytics = getAnalyticsService();
-    analytics.pageView('/leaderboard', 'Leaderboard');
-
-    async function loadLeaderboard() {
-      try {
-        const progressService = getProgressService();
-        const data = await progressService.getLeaderboard('alltime');
-        setLeaderboard(data as any);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadLeaderboard();
-  }, []);
-
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
-    if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (rank === 3) return <Award className="h-5 w-5 text-amber-600" />;
-    return <span className="text-sm font-medium text-muted-foreground">#{rank}</span>;
-  };
-
-  if (loading) {
-    return (
-      <div className="container flex min-h-[600px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  const currentUserId = publicKey?.toBase58();
-  const userEntry = leaderboard.find(entry => entry.userId === currentUserId);
-
   return (
-    <div className="container py-8 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Leaderboard</h1>
-        <p className="text-muted-foreground">
-          See how you rank against other developers
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#060608] text-white pt-24 pb-20 px-4 md:px-8 font-['Bricolage_Grotesque']">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <p className="font-['JetBrains_Mono'] text-[#00FF94] text-[10px] uppercase tracking-widest mb-2">// Helius_DAS_Indexed</p>
+          <h1 className="font-['Syne'] text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
+            Global <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF94] to-[#00E5FF]">Rankings</span>
+          </h1>
+        </div>
 
-      {/* User's Rank */}
-      {userEntry && (
-        <Card className="border-primary">
-          <CardHeader>
-            <CardTitle className="text-lg">Your Rank</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-10 h-10">
-                  {getRankIcon(userEntry.rank)}
-                </div>
+        <div className="space-y-3">
+          {LEADERBOARD_DATA.map((user) => (
+            <div key={user.rank} className="bg-[#0C0C10]/50 border border-white/[0.05] hover:border-white/10 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="w-8 text-center font-['JetBrains_Mono'] text-white/40 font-bold">#{user.rank}</div>
                 <div>
-                  <div className="font-semibold">{userEntry.username}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Level {userEntry.level}
-                  </div>
+                  <h4 className="font-['Syne'] font-bold">{user.name}</h4>
+                  <p className="font-['JetBrains_Mono'] text-[10px] text-white/30">{user.handle}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-lg">{formatXP(userEntry.totalXp)} XP</div>
-                <div className="text-sm text-muted-foreground">
-                  {userEntry.achievements} achievements
-                </div>
+              <div className="flex items-center gap-8">
+                <div className="font-['JetBrains_Mono'] text-sm font-bold">{user.xp.toLocaleString()} <span className="text-[10px] text-white/30 uppercase">XP</span></div>
+                <div className="w-16 text-right font-['JetBrains_Mono'] text-xs text-[#00E5FF]">Lv.{user.level}</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Leaderboard Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Developers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {leaderboard.map((entry) => {
-              const isCurrentUser = entry.userId === currentUserId;
-              
-              return (
-                <div
-                  key={entry.userId}
-                  className={`flex items-center justify-between p-4 rounded-lg ${
-                    isCurrentUser ? 'bg-primary/10 border border-primary' : 'border'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-10 h-10">
-                      {getRankIcon(entry.rank)}
-                    </div>
-                    <div>
-                      <div className="font-semibold flex items-center gap-2">
-                        {entry.username || truncateAddress(entry.userId)}
-                        {isCurrentUser && (
-                          <Badge variant="secondary" className="text-xs">You</Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Level {entry.level} • {entry.completedCourses} courses
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold">{formatXP(entry.totalXp)} XP</div>
-                    <div className="text-sm text-muted-foreground">
-                      {entry.achievements} achievements
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
