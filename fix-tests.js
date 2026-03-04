@@ -1,69 +1,66 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 Executing Atomic Routing Fix for Production...');
+console.log('🌐 Injecting Language Switcher & Navigation Hooks...');
 
 const rootDir = process.cwd();
 
-// 1. CLEANING THE MESS: Remove overlapping folders to stop redirection loops
-const pathsToClean = [
-  'app/(platform)/dashboard',
-  'app/courses/[slug]/lessons/[id]',
-  'app/courses/[slug]/lessons/[lessonId]'
-];
-
-pathsToClean.forEach(p => {
-  const fullPath = path.join(rootDir, p);
-  if (fs.existsSync(fullPath)) {
-    fs.rmSync(fullPath, { recursive: true, force: true });
-    console.log(`🗑️ Cleaned: ${p}`);
-  }
-});
-
-// 2. REBUILDING WITH PROPER SEGREGATION
-// We will use (platform) group for logged-in pages to isolate them from landing
-const newStructure = [
-  'app/(auth)/login',
-  'app/(platform)/dashboard',
-  'app/(platform)/courses/[slug]',
-  'app/(platform)/courses/[slug]/[lessonId]',
-  'app/(platform)/leaderboard'
-];
-
-newStructure.forEach(dir => {
-  fs.mkdirSync(path.join(rootDir, dir), { recursive: true });
-});
-
-// 3. INJECTING THE "WORLD CLASS" ROUTING LOGIC (Next.js Middleware Fix)
-const middlewarePath = path.join(rootDir, 'middleware.ts');
-const middlewareContent = `
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Strict Routing: Prevent infinite loops
-  if (pathname === '/') return NextResponse.next();
-  
-  // If user is hitting dashboard without being logged in, we let the app handle it
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
-};
+// 1. Create Navigation wrapper for next-intl
+const navConfig = `
+import {createSharedPathnamesNavigation} from 'next-intl/navigation';
+ 
+export const locales = ['en', 'pt'] as const;
+export const {Link, redirect, usePathname, useRouter} = createSharedPathnamesNavigation({locales});
 `;
-fs.writeFileSync(middlewarePath, middlewareContent);
+const libDir = path.join(rootDir, 'src/lib');
+if (!fs.existsSync(libDir)) fs.mkdirSync(libDir, { recursive: true });
+fs.writeFileSync(path.join(libDir, 'navigation.ts'), navConfig);
 
-// 4. FIXING THE NAV LINKS (The "Tap" Redirect Fix)
-const navPath = path.join(rootDir, 'components/layout/AppSidebar.tsx');
-if (fs.existsSync(navPath)) {
-    let content = fs.readFileSync(navPath, 'utf8');
-    // Ensure links are absolute and correct
-    content = content.replace(/href="dashboard"/g, 'href="/dashboard"');
-    content = content.replace(/href="courses"/g, 'href="/courses"');
-    fs.writeFileSync(navPath, content);
+// 2. Create the Language Switcher Component
+const switcherDir = path.join(rootDir, 'src/presentation/components');
+if (!fs.existsSync(switcherDir)) fs.mkdirSync(switcherDir, { recursive: true });
+
+const switcherComponent = `
+'use client';
+
+import { useLocale } from 'next-intl';
+import { useRouter, usePathname } from '@/lib/navigation';
+import { Languages } from 'lucide-react';
+
+export function LanguageSwitcher() {
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const toggleLocale = () => {
+    const nextLocale = locale === 'en' ? 'pt' : 'en';
+    router.replace(pathname, { locale: nextLocale });
+  };
+
+  return (
+    <button 
+      onClick={toggleLocale}
+      className="flex items-center gap-3 px-4 py-3 w-full text-white/40 hover:text-[#00FF94] hover:bg-white/5 rounded-xl transition-all font-['JetBrains_Mono'] text-xs"
+    >
+      <Languages className="w-5 h-5" />
+      <span className="md:inline hidden uppercase tracking-widest">
+        {locale === 'en' ? 'English' : 'Português'}
+      </span>
+    </button>
+  );
+}
+`;
+fs.writeFileSync(path.join(switcherDir, 'LanguageSwitcher.tsx'), switcherComponent);
+
+// 3. Inject into Sidebar
+const sidebarPath = path.join(rootDir, 'components/layout/AppSidebar.tsx');
+if (fs.existsSync(sidebarPath)) {
+    let content = fs.readFileSync(sidebarPath, 'utf8');
+    if (!content.includes('LanguageSwitcher')) {
+        content = "import { LanguageSwitcher } from '@/presentation/components/LanguageSwitcher';\\n" + content;
+        content = content.replace('{/* Settings Link */}', '<LanguageSwitcher />\\n            {/* Settings Link */}');
+        fs.writeFileSync(sidebarPath, content);
+    }
 }
 
-console.log('\n✅ ATOMIC FIX COMPLETE. Redirect loops eliminated.');
+console.log('\\n✅ SWITCHER READY. Users can now toggle between EN and PT.');

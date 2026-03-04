@@ -1,0 +1,17 @@
+{
+  "Index": {
+    "title": "Superteam Academy",
+    "description": "Aprenda Solana. Construa o Futuro.",
+    "start": "Começar"
+  },
+  "Dashboard": {
+    "welcome": "Bem-vindo de volta, {name}",
+    "xp": "XP Total",
+    "level": "Nível {level}"
+  },
+  "Course": {
+    "resume": "Retomar Lição",
+    "complete": "Concluir Lição",
+    "curriculum": "Currículo"
+  }
+}

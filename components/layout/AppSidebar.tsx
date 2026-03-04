@@ -1,4 +1,4 @@
-'use client';
+import { LanguageSwitcher } from '@/presentation/components/LanguageSwitcher';\n'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, BookOpen, Trophy, User, Settings, Award } from 'lucide-react';
