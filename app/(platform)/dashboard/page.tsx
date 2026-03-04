@@ -2,10 +2,10 @@
 
 /**
  * app/page.tsx
- * Superteam Academy — multiblock.space-inspired landing page
+ * Superteam Academy — WORLD CLASS EDITION (Dynamic + Merged)
  */
 
-import { useEffect, useRef, useState, CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { motion, useInView, useMotionValue, useSpring, Variants } from 'framer-motion';
@@ -20,171 +20,84 @@ import { formatDuration } from '@/lib/utils';
 
 // ── Motion variants ───────────────────────────────────────────────────────────
 const fadeUp: Variants = {
-  hidden:  { opacity: 0, y: 20, filter: 'blur(4px)' },
+  hidden:  { opacity: 0, y: 30, filter: 'blur(8px)' },
   visible: (i = 0) => ({
     opacity: 1, y: 0, filter: 'blur(0px)',
-    transition: { duration: 0.6, delay: i * 0.09, ease: [0.23, 1, 0.32, 1] },
+    transition: { duration: 0.8, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] },
   }),
 };
 const stagger: Variants = {
   hidden:  {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
 };
 
 // ── Animated counter ──────────────────────────────────────────────────────────
 function AnimatedNumber({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const ref   = useRef<HTMLSpanElement>(null);
+  const ref    = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const mv     = useMotionValue(0);
-  const spring = useSpring(mv, { stiffness: 55, damping: 18 });
+  const spring = useSpring(mv, { stiffness: 50, damping: 20 });
   const [val, setVal] = useState('0');
+  
   useEffect(() => { if (inView) mv.set(target); }, [inView, mv, target]);
   useEffect(() => spring.on('change', (v) => setVal(Math.round(v).toLocaleString())), [spring]);
+  
   return <span ref={ref}>{val}{suffix}</span>;
 }
 
-// ── Dot-grid + glow background ────────────────────────────────────────────────
-function Background() {
+// ── Cinematic Background ──────────────────────────────────────────────────────
+function CinematicOrbs() {
   return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
-      {/* dot grid — fades from top, invisible at bottom */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.11) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-          maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%)',
-        }}
-      />
-      {/* purple glow – top center */}
-      <div className="absolute -top-56 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full"
-        style={{ background: 'radial-gradient(ellipse, rgba(124,58,237,0.24) 0%, transparent 70%)', filter: 'blur(70px)' }} />
-      {/* solana green – right */}
-      <div className="absolute top-1/3 -right-72 h-[600px] w-[600px] rounded-full"
-        style={{ background: 'radial-gradient(ellipse, rgba(20,241,149,0.11) 0%, transparent 70%)', filter: 'blur(90px)' }} />
-      {/* indigo – left bottom */}
-      <div className="absolute -bottom-24 -left-48 h-[500px] w-[600px] rounded-full"
-        style={{ background: 'radial-gradient(ellipse, rgba(99,102,241,0.13) 0%, transparent 70%)', filter: 'blur(100px)' }} />
+    <div className="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden>
+      {/* Deep Space Orbs */}
+      <div className="absolute -top-[18%] -left-[8%] w-[62vw] h-[62vw] rounded-full mix-blend-screen opacity-50"
+           style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 65%)', animation: 'orb-float 12s ease-in-out infinite' }} />
+      <div className="absolute -top-[5%] -right-[12%] w-[48vw] h-[48vw] rounded-full mix-blend-screen opacity-40"
+           style={{ background: 'radial-gradient(circle, rgba(255,229,0,0.02) 0%, transparent 65%)', animation: 'orb-float-r 16s ease-in-out infinite' }} />
+      <div className="absolute -bottom-[10%] right-[18%] w-[40vw] h-[40vw] rounded-full mix-blend-screen opacity-50"
+           style={{ background: 'radial-gradient(circle, rgba(167,139,250,0.03) 0%, transparent 65%)', animation: 'orb-float 18s ease-in-out infinite reverse' }} />
+      
+      {/* Subtle Dot Grid Mask */}
+      <div className="absolute inset-0 opacity-[0.85]"
+           style={{
+             backgroundImage: 'radial-gradient(circle, rgba(0,229,255,0.08) 1px, transparent 1px)',
+             backgroundSize: '36px 36px',
+             maskImage: 'radial-gradient(ellipse 75% 75% at 50% 50%, black 30%, transparent 100%)',
+             WebkitMaskImage: 'radial-gradient(ellipse 75% 75% at 50% 50%, black 30%, transparent 100%)',
+           }} />
     </div>
   );
 }
 
-// ── CSS @property animated gradient border ────────────────────────────────────
-const SPIN_CSS = `
-  @property --angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
-  }
-  @keyframes spin-border {
-    to { --angle: 360deg; }
-  }
-`;
-
-function GradientBorderCard({
-  children, className = '', animate = false,
-  colorA = '#7c3aed', colorB = '#14f195', colorC = '#6366f1',
-}: {
-  children: React.ReactNode; className?: string; animate?: boolean;
-  colorA?: string; colorB?: string; colorC?: string;
-}) {
-  const id = `gbc-${colorA.replace('#', '')}`;
-  const gradStyle: CSSProperties = animate
-    ? { background: `conic-gradient(from var(--angle,0deg), ${colorA}, ${colorB}, ${colorC}, ${colorA})`, animation: 'spin-border 4s linear infinite' }
-    : { background: `linear-gradient(135deg, ${colorA}55, ${colorB}25, ${colorC}35)` };
-
-  return (
-    <div className={`relative rounded-2xl p-px ${className}`}>
-      <style>{SPIN_CSS}</style>
-      <div className="absolute inset-0 rounded-2xl" style={gradStyle} />
-      <div className="relative h-full rounded-2xl bg-[#0d0d18] backdrop-blur-xl">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ── Static glass card ─────────────────────────────────────────────────────────
-function GlassCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm transition-all duration-300 hover:border-white/[0.13] hover:bg-white/[0.05] ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-// ── Eyebrow pill with animated border ─────────────────────────────────────────
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <GradientBorderCard animate colorA="#7c3aed" colorB="#14f195" colorC="#06b6d4">
-      <div className="flex items-center gap-2 px-4 py-1.5 text-[13px] text-slate-300">
-        {children}
-      </div>
-    </GradientBorderCard>
-  );
-}
-
-// ── Difficulty badge ──────────────────────────────────────────────────────────
-function Difficulty({ level }: { level: string }) {
-  const map: Record<string, string> = {
-    beginner:     'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
-    intermediate: 'text-amber-400   bg-amber-400/10   border-amber-400/20',
-    advanced:     'text-rose-400    bg-rose-400/10    border-rose-400/20',
-  };
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${map[level?.toLowerCase()] ?? 'text-slate-400 bg-slate-400/10 border-slate-400/20'}`}>
-      {level}
-    </span>
-  );
-}
-
-// ── Feature bento data ────────────────────────────────────────────────────────
+// ── Data Mapped to New Colors ─────────────────────────────────────────────────
 const FEATURES = [
   {
-    icon: Code2, title: 'Live Code Challenges', tag: 'Interactive', accent: '#7c3aed',
+    icon: Code2, title: 'Live Code Challenges', tag: 'Interactive', accent: '#00E5FF',
     desc: 'Write real Solana programs in-browser. Tests run instantly. No local setup, ever.',
     wide: true,
-    preview: (
-      <div className="mt-4 rounded-xl border border-white/[0.06] bg-black/40 p-4 font-mono text-[11px] leading-relaxed text-slate-400">
-        <span className="text-[#14f195]">fn</span>{' '}
-        <span className="text-violet-400">initialize_course</span>{'(ctx: Context<Initialize>) -> Result<()> {'}<br/>
-        {'  let course = &mut ctx.accounts.'}<span className="text-amber-400">course</span>{';\n  course.'}<span className="text-sky-400">authority</span>{' = ctx.accounts.payer.key();\n  '}<span className="text-[#14f195]">Ok</span>{'(())\n}'}
-      </div>
-    ),
   },
-  { icon: Shield,  title: 'On-Chain Credentials', tag: 'Web3-native', accent: '#14f195', desc: 'NFT certificates minted on Solana — verifiable, permanent, provably yours.', wide: false, preview: null },
-  { icon: Trophy,  title: 'XP & Leaderboard',     tag: 'Gamified',    accent: '#f59e0b', desc: 'Every lesson earns XP. Climb the global leaderboard. Unlock rare achievements.', wide: false, preview: null },
-  { icon: Globe2,  title: '3 Languages',           tag: 'LatAm',       accent: '#06b6d4', desc: 'English, Português, Español. Built for Latin American developers first.', wide: false, preview: null },
-  { icon: Cpu,     title: 'Open Source',            tag: 'Community',   accent: '#6366f1', desc: 'Every line is public. Contribute courses, fixes, features. Fork it freely.', wide: false, preview: null },
+  { icon: Shield,  title: 'On-Chain Credentials', tag: 'Web3-native', accent: '#FFE500', desc: 'Metaplex Core NFTs crafted with absolute precision. Permanent & provably yours.', wide: false },
+  { icon: Trophy,  title: 'Soulbound XP',      tag: 'Asset',      accent: '#FF6B6B', desc: 'Your progress is a Token-2022 asset. Your wallet balance is your XP.', wide: false },
+  { icon: Globe2,  title: 'Built for LATAM',      tag: 'i18n',        accent: '#A78BFA', desc: 'English, Português, Español. Full i18n by native speakers.', wide: false },
+  { icon: Cpu,     title: 'Helius Indexed',       tag: 'Infra',       accent: '#00FF94', desc: 'Lightning-fast leaderboards powered by Helius DAS API. Real-time.', wide: false },
   {
-    icon: Layers, title: 'Structured Learning Tracks', tag: 'Curated', accent: '#ec4899',
-    desc: 'Four tracks from Fundamentals → DeFi → Security → Full Stack dApps.',
+    icon: Layers, title: 'Structured Tracks', tag: 'Curated', accent: '#00E5FF',
+    desc: 'Four elite tracks from Fundamentals → DeFi → Security → Full Stack.',
     wide: true,
-    preview: (
-      <div className="mt-4 grid grid-cols-4 gap-2">
-        {[['◆','Fundamentals','#7c3aed'],['◈','DeFi','#14f195'],['◉','Security','#f59e0b'],['◇','Full Stack','#06b6d4']].map(([icon, label, color]) => (
-          <div key={String(label)} className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3 text-center">
-            <span className="mb-1.5 block text-lg" style={{ color: String(color) }}>{icon}</span>
-            <p className="text-[9px] leading-tight text-slate-500">{label}</p>
-          </div>
-        ))}
-      </div>
-    ),
   },
 ];
 
 const STATS = [
-  { label: 'Developers', value: 12000, suffix: '+', Icon: Users },
-  { label: 'Lessons',    value: 48,    suffix: '',   Icon: BookOpen },
-  { label: 'XP Earned',  value: 2400000, suffix: '+', Icon: Zap },
-  { label: 'Countries',  value: 18,    suffix: '',   Icon: Globe2 },
+  { label: 'Developers', value: 12000, suffix: '+', color: '#00E5FF' },
+  { label: 'Lessons',    value: 48,    suffix: '',  color: '#FFE500' },
+  { label: 'XP Earned',  value: 2400000, suffix: '+', color: '#FF6B6B' },
+  { label: 'Countries',  value: 18,    suffix: '',  color: '#A78BFA' },
 ];
 
 const TESTIMONIALS = [
-  { name: 'Carlos Silva',  role: 'Solana Developer @ Phantom',   initials: 'CS', color: '#a78bfa', quote: 'Superteam Academy was the catalyst for my career in Web3. The on-chain credential opened doors immediately.' },
-  { name: 'Isabela Rocha', role: 'Founder, SolanaPayBR',          initials: 'IR', color: '#14f195', quote: 'Zero to shipping a production dApp in 3 months. The interactive code challenges are genuinely elite-tier.' },
-  { name: 'Diego Martins', role: 'Security Researcher',            initials: 'DM', color: '#38bdf8', quote: 'The security auditing track is top-tier. I use techniques from it in professional audits daily.' },
+  { name: 'Carlos Silva',  role: 'Solana Dev @ Phantom',   initials: 'CS', color: '#A78BFA', quote: 'Superteam Academy was the catalyst for my career in Web3. The on-chain credential opened doors immediately.' },
+  { name: 'Isabela Rocha', role: 'Founder, SolanaPayBR',   initials: 'IR', color: '#00FF94', quote: 'Zero to shipping a production dApp in 3 months. The interactive code challenges are genuinely elite-tier.' },
+  { name: 'Diego Martins', role: 'Security Researcher',    initials: 'DM', color: '#00E5FF', quote: 'The security auditing track is top-tier. I use techniques from it in professional audits daily.' },
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -198,362 +111,270 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div
-      className="relative min-h-screen overflow-x-hidden bg-[#09090f] text-white antialiased font-sans"
-    >
-      <Background />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+      `}</style>
 
-      {/* ─── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[100svh] flex-col items-center justify-center px-4 pb-20 pt-32 text-center">
-        {/* Pill badge */}
-        <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="mb-8 inline-block">
-          <Pill>
-            <Sparkles className="h-3 w-3 text-violet-400" />
-            <span>The Solana learning platform for LatAm</span>
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#14f195] opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#14f195]" />
-            </span>
-          </Pill>
-        </motion.div>
+      <div className="relative min-h-screen overflow-x-hidden bg-[#060608] text-[#f0f0f0] antialiased scanlines-overlay font-['Bricolage_Grotesque']">
+        <CinematicOrbs />
 
-        {/* Headline */}
-        <motion.h1
-          variants={fadeUp} initial="hidden" animate="visible" custom={1}
-          className="mx-auto max-w-[820px] text-[clamp(2.8rem,8vw,5.4rem)] font-bold leading-[1.05] tracking-[-0.03em]"
-        >
-          Master Solana.{' '}
-          <br className="hidden sm:block" />
-          <span className="bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(135deg, #a78bfa 0%, #14f195 55%, #38bdf8 100%)' }}>
-            Earn On-Chain.
-          </span>
-          <br className="hidden sm:block" />
-          Get Hired.
-        </motion.h1>
-
-        {/* Sub */}
-        <motion.p
-          variants={fadeUp} initial="hidden" animate="visible" custom={2}
-          className="mx-auto mt-6 max-w-[540px] text-[17px] leading-relaxed text-slate-400"
-        >
-          Interactive courses, live coding challenges, and verifiable NFT credentials —
-          {' '}<span className="text-slate-200">built for the Solana ecosystem in Latin America.</span>
-        </motion.p>
-
-        {/* CTA row */}
-        <motion.div
-          variants={fadeUp} initial="hidden" animate="visible" custom={3}
-          className="mt-10 flex flex-wrap items-center justify-center gap-3"
-        >
-          <Link href={connected ? '/dashboard' : '/courses'}>
-            <button
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl px-6 py-3 text-sm font-semibold text-white transition-all duration-300"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #14f195)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 32px rgba(124,58,237,0.65)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
-            >
-              {connected ? 'Go to Dashboard' : 'Start Learning — Free'}
-              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
-            </button>
-          </Link>
-          <Link href="/courses">
-            <button className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-6 py-3 text-sm font-medium text-slate-300 backdrop-blur-md transition-all duration-200 hover:border-white/20 hover:bg-white/[0.07]">
-              Browse Courses <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </Link>
-        </motion.div>
-
-        {/* Trust row */}
-        <motion.div
-          variants={fadeUp} initial="hidden" animate="visible" custom={4}
-          className="mt-11 flex flex-wrap items-center justify-center gap-5 text-[12px] text-slate-600"
-          style={{ fontFamily: 'var(--font-mono)' }}
-        >
-          {['no credit card', 'open source', 'on-chain credentials', '3 languages'].map((t) => (
-            <span key={t} className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3 w-3 text-[#14f195]" /> {t}
-            </span>
-          ))}
-        </motion.div>
-      </section>
-
-      {/* ─── STATS ─────────────────────────────────────────────────────────── */}
-      <section className="relative border-y border-white/[0.06] py-10">
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 px-4 md:grid-cols-4">
-          {STATS.map(({ label, value, suffix, Icon }, i) => (
-            <motion.div key={label} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.5}
-              className="flex flex-col items-center gap-1 text-center">
-              <Icon className="h-4 w-4 text-violet-400" />
-              <span className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-mono)' }}>
-                <AnimatedNumber target={value} suffix={suffix} />
+        {/* ─── HERO ──────────────────────────────────────────────────────────── */}
+        <section className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-4 pb-20 pt-32 text-center max-w-7xl mx-auto">
+          
+          {/* Hacker Eyebrow */}
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="mb-8 inline-block">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md border border-[#00E5FF]/20 bg-[#00E5FF]/5 font-['JetBrains_Mono'] text-[10.5px] font-medium tracking-[0.14em] text-[#00E5FF] uppercase">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00FF94] opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00FF94] shadow-[0_0_8px_#00FF94]" />
               </span>
-              <span className="text-[11px] uppercase tracking-widest text-slate-600">{label}</span>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+              Devnet Live · Token-2022 · 283 tests ✓
+            </span>
+          </motion.div>
 
-      {/* ─── BENTO FEATURES ────────────────────────────────────────────────── */}
-      <section className="relative px-4 py-28">
-        <div className="mx-auto max-w-5xl">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-14 text-center">
-            <p className="mb-3 text-[11px] uppercase tracking-[0.22em] text-violet-400" style={{ fontFamily: 'var(--font-mono)' }}>
-              — what you get
-            </p>
-            <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
-              Everything to{' '}
-              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, #a78bfa, #14f195)' }}>
-                go from zero to hired
-              </span>
+          {/* World Class Headline */}
+          <motion.h1
+            variants={fadeUp} initial="hidden" animate="visible" custom={1}
+            className="mx-auto max-w-[1000px] font-['Syne'] text-[clamp(3.2rem,9vw,8rem)] font-extrabold leading-[0.9] tracking-[-0.04em]"
+          >
+            Master Solana.{' '}
+            <br className="hidden sm:block" />
+            <span className="glitch text-transparent" data-text="Earn On-Chain." style={{ WebkitTextStroke: '2px rgba(0,229,255,0.65)' }}>
+              Earn On-Chain.
+            </span>
+            <br className="hidden sm:block" />
+            <span className="text-[#FFE500] drop-shadow-[0_0_40px_rgba(255,229,0,0.2)]">
+              Get Hired.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            variants={fadeUp} initial="hidden" animate="visible" custom={2}
+            className="mx-auto mt-8 max-w-[540px] text-[16px] md:text-[18px] font-light leading-relaxed text-white/50"
+          >
+            Interactive courses, live coding challenges, and verifiable NFT credentials — 
+            <span className="text-white/90 font-medium"> built for Latin American developers.</span>
+          </motion.p>
+
+          {/* CTA row */}
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="visible" custom={3}
+            className="mt-12 flex flex-wrap items-center justify-center gap-4"
+          >
+            <Link href={connected ? '/dashboard' : '/courses'}>
+              <button className="group relative inline-flex items-center gap-2 rounded-xl bg-[#00E5FF] px-8 py-4 font-['Syne'] text-[15px] font-bold text-black transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(0,229,255,0.4),0_10px_20px_rgba(0,0,0,0.5)]">
+                {connected ? 'Go to Dashboard' : 'Start Learning — Free'}
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+              </button>
+            </Link>
+            <Link href="/courses">
+              <button className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-8 py-4 font-['Syne'] text-[15px] font-semibold text-white/60 backdrop-blur-md transition-all duration-300 hover:border-[#00E5FF]/30 hover:text-[#00E5FF] hover:bg-[#00E5FF]/5">
+                Browse Curriculum <ChevronRight className="h-4 w-4" />
+              </button>
+            </Link>
+          </motion.div>
+        </section>
+
+        {/* ─── STATS (World Class Minimalist) ────────────────────────────────── */}
+        <section className="relative z-10 px-4 py-10 max-w-7xl mx-auto">
+          <div className="world-class-card p-10 md:p-14">
+            <div className="grid grid-cols-2 gap-10 md:grid-cols-4 text-center">
+              {STATS.map(({ label, value, suffix, color }, i) => (
+                <motion.div key={label} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.2}>
+                  <div className="font-['Syne'] text-[clamp(2rem,4vw,3rem)] font-extrabold tracking-[-0.04em]" style={{ color }}>
+                    <AnimatedNumber target={value} suffix={suffix} />
+                  </div>
+                  <div className="mt-2 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.1em] text-white/30">
+                    {label}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── BENTO FEATURES ────────────────────────────────────────────────── */}
+        <section className="relative z-10 px-4 py-24 max-w-7xl mx-auto">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-14">
+            <p className="mb-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#00E5FF]/60">// Architecture</p>
+            <h2 className="font-['Syne'] text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold leading-tight tracking-[-0.04em] text-white">
+              Built different. <span className="text-white/20 italic font-light">By design.</span>
             </h2>
           </motion.div>
 
           <motion.div
-            variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
-            className="grid grid-cols-1 gap-4 md:grid-cols-3"
+            variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="grid grid-cols-1 gap-4 md:grid-cols-3 auto-rows-[minmax(200px,auto)]"
           >
-            {FEATURES.map(({ icon: Icon, title, desc, wide, accent, tag, preview }, i) => (
+            {FEATURES.map(({ icon: Icon, title, desc, wide, accent, tag }, i) => (
               <motion.div key={title} variants={fadeUp} custom={i} className={wide ? 'md:col-span-2' : ''}>
-                {wide ? (
-                  <GradientBorderCard animate colorA={accent} colorB="#7c3aed" colorC="#06b6d4" className="h-full">
-                    <div className="h-full p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border"
-                          style={{ borderColor: `${accent}40`, background: `${accent}18` }}>
-                          <Icon className="h-5 w-5" style={{ color: accent }} />
-                        </div>
-                        <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest"
-                          style={{ borderColor: `${accent}30`, color: accent, background: `${accent}12` }}>
-                          {tag}
-                        </span>
-                      </div>
-                      <h3 className="mt-4 text-[17px] font-semibold text-white">{title}</h3>
-                      <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{desc}</p>
-                      {preview}
-                    </div>
-                  </GradientBorderCard>
-                ) : (
-                  <GlassCard className="h-full p-6">
-                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border"
-                      style={{ borderColor: `${accent}35`, background: `${accent}15` }}>
-                      <Icon className="h-5 w-5" style={{ color: accent }} />
-                    </div>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <h3 className="text-[15px] font-semibold text-white">{title}</h3>
-                      <span className="rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest"
-                        style={{ borderColor: `${accent}30`, color: accent, background: `${accent}12` }}>
-                        {tag}
-                      </span>
-                    </div>
-                    <p className="text-[13px] leading-relaxed text-slate-500">{desc}</p>
-                  </GlassCard>
-                )}
+                <div 
+                  className="world-class-card h-full p-8 group cursor-default"
+                  style={{ '--hover-color': accent } as React.CSSProperties}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${accent}40`;
+                    e.currentTarget.style.boxShadow = `0 20px 60px rgba(0,0,0,0.6), 0 0 40px ${accent}15`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div className="mb-6 flex items-center justify-between">
+                    <span className="inline-block rounded-sm border px-3 py-1 font-['JetBrains_Mono'] text-[9px] font-medium uppercase tracking-[0.12em]"
+                          style={{ borderColor: `${accent}30`, color: accent, background: `${accent}10` }}>
+                      {tag}
+                    </span>
+                    <Icon className="h-6 w-6 opacity-50" style={{ color: accent }} />
+                  </div>
+                  <h3 className="mb-3 font-['Syne'] text-[22px] font-bold tracking-[-0.03em] text-white">{title}</h3>
+                  <p className="font-['Bricolage_Grotesque'] text-[14px] font-light leading-relaxed text-white/40">{desc}</p>
+                </div>
               </motion.div>
             ))}
           </motion.div>
-        </div>
-      </section>
+        </section>
 
-      {/* ─── LEARNING TRACKS ───────────────────────────────────────────────── */}
-      <section className="relative px-4 py-16">
-        <div className="mx-auto max-w-5xl">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-12 text-center">
-            <p className="mb-3 text-[11px] uppercase tracking-[0.22em] text-[#14f195]" style={{ fontFamily: 'var(--font-mono)' }}>
-              — structured paths
-            </p>
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Choose your track</h2>
+        {/* ─── LEARNING TRACKS ───────────────────────────────────────────────── */}
+        <section className="relative z-10 px-4 py-16 max-w-7xl mx-auto">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-12">
+            <p className="mb-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#FFE500]/60">// Curriculum</p>
+            <h2 className="font-['Syne'] text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold tracking-[-0.04em] text-white">Choose your track</h2>
           </motion.div>
 
-          <motion.div
-            variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-          >
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { name: 'Solana Fundamentals', courses: 2, hours: '14h', color: '#7c3aed', symbol: '◆' },
-              { name: 'DeFi Developer',       courses: 3, hours: '30h', color: '#14f195', symbol: '◈' },
-              { name: 'Security Auditor',      courses: 3, hours: '27h', color: '#f59e0b', symbol: '◉' },
-              { name: 'Full Stack Solana',     courses: 3, hours: '33h', color: '#06b6d4', symbol: '◇' },
+              { name: 'Solana Fundamentals', courses: 2, hours: '14h', color: '#00E5FF', symbol: '◆' },
+              { name: 'DeFi Developer',      courses: 3, hours: '30h', color: '#FFE500', symbol: '◈' },
+              { name: 'Security Auditor',    courses: 3, hours: '27h', color: '#FF6B6B', symbol: '◉' },
+              { name: 'Full Stack Solana',   courses: 3, hours: '33h', color: '#A78BFA', symbol: '◇' },
             ].map(({ name, courses, hours, color, symbol }, i) => (
               <motion.div key={name} variants={fadeUp} custom={i}>
                 <Link href="/courses">
-                  <div
-                    className="group relative cursor-pointer overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-1"
-                    style={{ borderColor: `${color}22`, background: `${color}08` }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 28px ${color}28`; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+                  <div 
+                    className="world-class-card group p-6 cursor-pointer"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = `${color}40`;
+                      e.currentTarget.style.boxShadow = `0 10px 40px ${color}15`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
-                    <span className="mb-3 block text-2xl" style={{ color }}>{symbol}</span>
-                    <h3 className="mb-3 text-[14px] font-semibold leading-snug text-white">{name}</h3>
-                    <div className="flex items-center gap-3 text-[11px]" style={{ fontFamily: 'var(--font-mono)', color }}>
-                      <span>{courses} courses</span>
-                      <span className="opacity-40">·</span>
+                    <span className="mb-4 block text-3xl opacity-80" style={{ color }}>{symbol}</span>
+                    <h3 className="mb-4 font-['Syne'] text-[16px] font-bold leading-snug text-white">{name}</h3>
+                    <div className="flex items-center gap-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest text-white/30">
+                      <span>{courses} crs</span>
+                      <span>·</span>
                       <span>{hours}</span>
                     </div>
-                    <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100" style={{ color }} />
                   </div>
                 </Link>
               </motion.div>
             ))}
           </motion.div>
-        </div>
-      </section>
+        </section>
 
-      {/* ─── FEATURED COURSES ──────────────────────────────────────────────── */}
-      {courses.length > 0 && (
-        <section className="relative px-4 py-20">
-          <div className="mx-auto max-w-5xl">
-            <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="mb-10 flex items-end justify-between">
+        {/* ─── FEATURED COURSES (Dynamic API Data) ───────────────────────────── */}
+        {courses.length > 0 && (
+          <section className="relative z-10 px-4 py-20 max-w-7xl mx-auto">
+            <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="mb-2 text-[11px] uppercase tracking-[0.22em] text-slate-600" style={{ fontFamily: 'var(--font-mono)' }}>— start here</p>
-                <h2 className="text-3xl font-bold tracking-tight">Featured Courses</h2>
+                <p className="mb-2 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#00FF94]/60">// Start Here</p>
+                <h2 className="font-['Syne'] text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold tracking-[-0.04em] text-white">Featured Courses</h2>
               </div>
-              <Link href="/courses" className="hidden items-center gap-1 text-sm text-slate-500 transition-colors hover:text-white md:flex">
-                View all <ChevronRight className="h-3.5 w-3.5" />
+              <Link href="/courses" className="font-['JetBrains_Mono'] text-[12px] text-white/40 hover:text-[#00E5FF] transition-colors">
+                view_all_courses →
               </Link>
             </motion.div>
 
-            <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="grid gap-4 md:grid-cols-3">
+            <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid gap-4 md:grid-cols-3">
               {courses.map((course, i) => (
                 <motion.div key={course.id} variants={fadeUp} custom={i}>
                   <Link href={`/courses/${course.slug}`}>
-                    <GlassCard className="group h-full cursor-pointer p-5 transition-all duration-300 hover:-translate-y-1">
-                      <div className="mb-3 flex items-start justify-between">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/10">
-                          <GraduationCap className="h-4 w-4 text-violet-400" />
-                        </div>
-                        <Difficulty level={course.difficulty} />
+                    <div className="world-class-card group h-full p-6 cursor-pointer hover:border-[#00E5FF]/40">
+                      <div className="mb-4 flex items-start justify-between">
+                        <span className="inline-block rounded-sm border border-white/10 bg-white/5 px-3 py-1 font-['JetBrains_Mono'] text-[9px] font-medium uppercase tracking-[0.12em] text-white/50">
+                          {course.difficulty}
+                        </span>
                       </div>
-                      <h3 className="mb-1.5 text-[15px] font-semibold leading-snug text-white transition-colors group-hover:text-violet-300">
+                      <h3 className="mb-2 font-['Syne'] text-[18px] font-bold leading-snug text-white transition-colors group-hover:text-[#00E5FF]">
                         {course.title}
                       </h3>
-                      <p className="mb-4 line-clamp-2 text-[12px] leading-relaxed text-slate-500">{course.description}</p>
-                      <div className="flex items-center gap-4 border-t border-white/[0.05] pt-3.5 text-[11px] text-slate-600"
-                        style={{ fontFamily: 'var(--font-mono)' }}>
-                        <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{course.totalLessons} lessons</span>
-                        <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-violet-400" />{(course as any).totalXp} XP</span>
-                        <span className="ml-auto">{formatDuration(((course as any).estimatedHours || 0) * 60)}</span>
+                      <p className="mb-6 line-clamp-2 font-['Bricolage_Grotesque'] text-[13px] font-light leading-relaxed text-white/40">
+                        {course.description}
+                      </p>
+                      <div className="flex items-center justify-between border-t border-white/[0.05] pt-4 font-['JetBrains_Mono'] text-[10px] text-white/30">
+                        <span className="flex items-center gap-1.5"><BookOpen className="h-3 w-3" />{course.totalLessons} lessons</span>
+                        <span className="flex items-center gap-1.5 text-[#FFE500]/70"><Zap className="h-3 w-3" />{(course as any).totalXp} XP</span>
                       </div>
-                    </GlassCard>
+                    </div>
                   </Link>
                 </motion.div>
               ))}
             </motion.div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* ─── TESTIMONIALS ──────────────────────────────────────────────────── */}
-      <section className="relative px-4 py-20">
-        <div className="mx-auto max-w-5xl">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-12 text-center">
-            <p className="mb-3 text-[11px] uppercase tracking-[0.22em] text-slate-600" style={{ fontFamily: 'var(--font-mono)' }}>— social proof</p>
-            <h2 className="text-3xl font-bold tracking-tight">Builders who shipped</h2>
+        {/* ─── TESTIMONIALS ──────────────────────────────────────────────────── */}
+        <section className="relative z-10 px-4 py-20 max-w-7xl mx-auto">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-12">
+            <p className="mb-3 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-white/30">// Social Proof</p>
+            <h2 className="font-['Syne'] text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold tracking-[-0.04em] text-white">Builders who shipped</h2>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid gap-4 md:grid-cols-3">
             {TESTIMONIALS.map(({ name, role, quote, initials, color }, i) => (
               <motion.div key={name} variants={fadeUp} custom={i}>
-                <GlassCard className="h-full p-6">
-                  <div className="mb-4 flex gap-0.5">
-                    {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="h-3.5 w-3.5 fill-current" style={{ color }} />
-                    ))}
+                <div className="world-class-card h-full p-8">
+                  <div className="mb-5 flex gap-1">
+                    {[...Array(5)].map((_, j) => <Star key={j} className="h-3.5 w-3.5 fill-current" style={{ color }} />)}
                   </div>
-                  <p className="mb-5 text-[14px] leading-relaxed text-slate-300">&ldquo;{quote}&rdquo;</p>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-black"
-                      style={{ background: `linear-gradient(135deg, ${color}, #7c3aed)` }}>
+                  <p className="mb-6 font-['Bricolage_Grotesque'] text-[14px] font-light leading-relaxed text-white/60">&ldquo;{quote}&rdquo;</p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg font-['Syne'] text-[13px] font-bold text-black"
+                         style={{ background: color }}>
                       {initials}
                     </div>
                     <div>
-                      <p className="text-[13px] font-semibold text-white">{name}</p>
-                      <p className="text-[11px] text-slate-600" style={{ fontFamily: 'var(--font-mono)' }}>{role}</p>
+                      <p className="font-['Syne'] text-[15px] font-bold text-white">{name}</p>
+                      <p className="font-['JetBrains_Mono'] text-[10px] text-white/30">{role}</p>
                     </div>
                   </div>
-                </GlassCard>
+                </div>
               </motion.div>
             ))}
           </motion.div>
-        </div>
-      </section>
+        </section>
 
-      {/* ─── HOW IT WORKS ──────────────────────────────────────────────────── */}
-      <section className="relative px-4 py-20">
-        <div className="mx-auto max-w-5xl">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-14 text-center">
-            <p className="mb-3 text-[11px] uppercase tracking-[0.22em] text-slate-600" style={{ fontFamily: 'var(--font-mono)' }}>— how it works</p>
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Three steps to your first credential</h2>
-          </motion.div>
+        {/* ─── FINAL CTA ─────────────────────────────────────────────────────── */}
+        <section className="relative z-10 px-4 pb-32 pt-20 max-w-4xl mx-auto text-center">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <p className="mb-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#00E5FF]">// Ready?</p>
+            <h2 className="mb-6 font-['Syne'] text-[clamp(2.5rem,6vw,5rem)] font-extrabold leading-[0.9] tracking-[-0.04em] text-white">
+              Start earning<br />
+              <span className="text-[#FFE500] drop-shadow-[0_0_40px_rgba(255,229,0,0.15)]">your credentials.</span>
+            </h2>
+            <p className="mx-auto mb-10 max-w-[420px] font-['Bricolage_Grotesque'] text-[16px] font-light leading-relaxed text-white/40">
+              Connect your wallet. Start learning. Your XP is soulbound — it stays with you forever.
+            </p>
+            
+            <Link href={connected ? '/dashboard' : '/courses'}>
+              <button className="group relative inline-flex items-center gap-2 rounded-xl bg-[#00E5FF] px-10 py-5 font-['Syne'] text-[16px] font-bold text-black transition-all duration-300 hover:scale-105 hover:shadow-[0_0_50px_rgba(0,229,255,0.4)]">
+                {connected ? 'Go to Dashboard' : 'Connect Wallet & Begin'}
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+              </button>
+            </Link>
 
-          <div className="relative">
-            {/* connecting line */}
-            <div className="absolute left-[16.66%] right-[16.66%] top-5 hidden h-px md:block"
-              style={{ background: 'linear-gradient(90deg, transparent, #7c3aed55, #14f19555, transparent)' }} />
-            <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid gap-8 md:grid-cols-3">
-              {[
-                { n: '01', label: 'Connect wallet',       sub: 'Phantom, Solflare, or Backpack. Your progress lives on Solana.', color: '#7c3aed' },
-                { n: '02', label: 'Complete challenges',   sub: 'Interactive lessons, live coding, and instant XP rewards.',      color: '#14f195' },
-                { n: '03', label: 'Claim your credential', sub: 'Mint your NFT certificate. Share it. Get hired.',                color: '#06b6d4' },
-              ].map(({ n, label, sub, color }, i) => (
-                <motion.div key={n} variants={fadeUp} custom={i} className="flex flex-col items-center text-center">
-                  <div className="relative mb-5 flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold"
-                    style={{ borderColor: `${color}50`, background: `${color}15`, color, fontFamily: 'var(--font-mono)' }}>
-                    {n}
-                  </div>
-                  <h3 className="mb-2 text-[15px] font-semibold text-white">{label}</h3>
-                  <p className="text-[13px] leading-relaxed text-slate-500">{sub}</p>
-                </motion.div>
+            <div className="mt-10 flex flex-wrap justify-center gap-6 font-['JetBrains_Mono'] text-[10px] text-white/20">
+              {['Devnet Ready', 'Open Source', '3 Languages', '283 Tests'].map((badge) => (
+                <span key={badge}>✓ {badge}</span>
               ))}
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FINAL CTA ─────────────────────────────────────────────────────── */}
-      <section className="relative px-4 pb-32 pt-16">
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)', filter: 'blur(80px)' }}
-        />
-        <div className="relative mx-auto max-w-2xl">
-          <GradientBorderCard animate colorA="#7c3aed" colorB="#14f195" colorC="#06b6d4">
-            <div className="px-8 py-14 text-center">
-              <p className="mb-3 text-[11px] uppercase tracking-[0.22em] text-violet-400" style={{ fontFamily: 'var(--font-mono)' }}>
-                — ready to build?
-              </p>
-              <h2 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">
-                Join{' '}
-                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #a78bfa, #14f195)' }}>
-                  12,000+
-                </span>{' '}
-                developers
-              </h2>
-              <p className="mx-auto mb-10 max-w-sm text-[15px] leading-relaxed text-slate-400">
-                Start for free. No credit card. No excuses.<br />Your on-chain credential is waiting.
-              </p>
-              <Link href="/courses">
-                <button
-                  className="group inline-flex items-center gap-2.5 rounded-xl px-8 py-3.5 text-sm font-semibold text-black transition-all duration-300"
-                  style={{ background: 'linear-gradient(135deg, #9945FF, #14f195)' }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 0 40px rgba(124,58,237,0.6)';
-                    (e.currentTarget as HTMLElement).style.transform = 'scale(1.04)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                    (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-                  }}
-                >
-                  Start Learning — Free
-                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                </button>
-              </Link>
             </div>
-          </GradientBorderCard>
-        </div>
-      </section>
-    </div>
+          </motion.div>
+        </section>
+      </div>
+    </>
   );
 }
