@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/src/store/AuthContext';
-import { progressService } from '@/src/infrastructure/services/LearningProgressService';
+import { progressService } from '@/src/services/LearningProgressService';
 import Counter from '@/src/components/world-class/Counter';
 import { Zap, Trophy, Flame } from 'lucide-react';
 
