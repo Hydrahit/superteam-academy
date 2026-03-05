@@ -1,67 +1,40 @@
 const fs = require('fs');
-const path = require('path');
 
-console.log('🌉 BUILDING THE BRAIN BRIDGE: Linking Logic to SQL Fortress...');
+console.log('☁️  CONFIGURING VERCEL PRODUCTION SETTINGS...');
 
-const rootDir = process.cwd();
-
-const createFile = (p, content) => {
-  const fullPath = path.join(rootDir, p);
-  const dir = path.dirname(fullPath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(fullPath, content.trim());
-  console.log(`✅ Bridge Synthesized: ${p}`);
+const vercelConfig = {
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "regions": ["cle1"], 
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+      ]
+    }
+  ]
 };
 
-// 1. BrainBridge Service Logic
-createFile('src/services/BrainBridge.ts', `
-import { supabase } from '@/src/infrastructure/supabase/client';
-import { AuthOrchestrator } from './AuthOrchestrator';
+fs.writeFileSync('vercel.json', JSON.stringify(vercelConfig, null, 2));
+console.log('✅ vercel.json generated with security headers.');
 
-export class BrainBridge {
-  /**
-   * Securely bridges the frontend action to the Database RPC.
-   * This is the ONLY way to update XP in the system.
-   */
-  static async secureCompleteLesson(payload: {
-    userId: string;
-    lessonId: string;
-    difficulty: number;
-    auth: { wallet: string; sig: string; nonce: string };
-  }) {
-    // 1. Cryptographic Gateway Verification (Lead Architect Requirement)
-    const isVerified = AuthOrchestrator.verifyWalletSignature(
-      payload.auth.wallet,
-      payload.auth.sig,
-      payload.auth.nonce
-    );
+// Create a deployment check script
+const deployCheck = `
+#!/bin/bash
+echo "🔍 Running Pre-flight checks..."
+npm run build
+if [ $? -eq 0 ]; then
+  echo "🚀 Build Passed! Ready for Vercel."
+else
+  echo "❌ Build Failed. Check the errors above."
+  exit 1
+fi
+`;
 
-    if (!isVerified) {
-      throw new Error("SECURE_BRIDGE_VIOLATION: Invalid Cryptographic Signature");
-    }
-
-    // 2. Trigger the Atomic SQL Function (The Fortress)
-    // We use Supabase RPC to call 'complete_lesson_atomic'
-    const { data, error } = await supabase.rpc('complete_lesson_atomic', {
-      p_user_id: payload.userId,
-      p_lesson_id: payload.lessonId,
-      p_difficulty: payload.difficulty,
-      p_base_xp: 100
-    });
-
-    if (error) {
-      console.error("Database Bridge Error:", error.message);
-      return { success: false, error: error.message };
-    }
-
-    // data returns the reward amount calculated by the DB logic
-    return { 
-      success: true, 
-      xpEarned: data,
-      message: data > 0 ? "XP_AWARDED_SUCCESSFULLY" : "LESSON_ALREADY_COMPLETED"
-    };
-  }
-}
-`);
-
-console.log('🚀 BRAIN BRIDGE IS LIVE. All core logic is now server-authoritative.');
+fs.writeFileSync('deploy-check.sh', deployCheck.trim());
+console.log('✅ deploy-check.sh created. Run it before pushing to GitHub.');
