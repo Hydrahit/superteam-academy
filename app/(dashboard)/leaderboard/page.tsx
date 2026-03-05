@@ -1,60 +1,108 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { HeliusIndexerService } from '@/src/services/HeliusIndexerService';
-import { Trophy, Share2, Twitter } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Trophy, Crown, Flame, ArrowUp } from 'lucide-react';
+import { useState } from 'react';
 
-export default function ProLeaderboard() {
-  const [entries, setEntries] = useState<any[]>([]);
+const MOCK_LEADERS = [
+  { id: 1, name: 'Anatoly_0x', xp: 24500, level: 15, avatar: '🔥', rank: 1 },
+  { id: 2, name: 'Toly_Fan', xp: 18200, level: 12, avatar: '⚡', rank: 2 },
+  { id: 3, name: 'Solana_Dev', xp: 15100, level: 10, avatar: '🛡️', rank: 3 },
+  { id: 4, name: 'Rust_King', xp: 12000, level: 9, avatar: '🦀', rank: 4 },
+  { id: 5, name: 'Anchor_Pro', xp: 9500, level: 7, avatar: '⚓', rank: 5 },
+  // ... more users
+];
 
-  const shareOnTwitter = (rank: number, xp: number) => {
-    const text = `I just reached Rank #${rank} with ${xp} XP on @SuperteamAcademy! 🚀 Building on Solana is elite. Check my progress: `;
-    const url = window.location.href;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-  };
-
-  useEffect(() => {
-    HeliusIndexerService.getLeaderboard("YOUR_MINT").then(res => {
-      setEntries(res.length > 0 ? res : [
-        { rank: 1, address: "7aV...Anatoly", xp: 14500, level: 12 },
-        { rank: 2, address: "3mK...Armani", xp: 9200, level: 9 },
-        { rank: 3, address: "OmDubey", xp: 8400, level: 9 }
-      ]);
-    });
-  }, []);
+export default function HallOfFame() {
+  const [currentUserRank] = useState({ rank: 42, xp: 1200, name: 'Om_Dubey' });
 
   return (
-    <div className="min-h-screen pt-24 px-8 max-w-5xl mx-auto font-sans">
-      <header className="mb-12 flex justify-between items-end">
-        <div>
-          <Trophy className="w-12 h-12 text-[#FFE500] mb-4" />
-          <h1 className="font-syne font-extrabold text-6xl tracking-tighter text-white uppercase italic">Elite_Rankings</h1>
-        </div>
-        <button 
-          onClick={() => shareOnTwitter(3, 8400)}
-          className="flex items-center gap-2 bg-white/5 border border-white/10 px-6 py-3 rounded-xl font-mono text-xs hover:bg-white/10 transition-all"
-        >
-          <Twitter className="w-4 h-4 text-[#1DA1F2]" /> SHARE_MY_RANK
-        </button>
-      </header>
+    <div className="min-h-screen pt-28 pb-32 px-6 bg-[#060608] selection:bg-cyan-500/30">
+      <div className="max-w-5xl mx-auto">
+        <header className="text-center mb-20">
+          <motion.h1 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-7xl font-syne font-black italic tracking-tighter text-white uppercase"
+          >
+            Hall_of_<span className="text-cyan-500">Fame</span>
+          </motion.h1>
+          <p className="text-neutral-500 font-mono text-xs uppercase tracking-widest mt-4">Top Builders of the Solana Ecosystem</p>
+        </header>
 
-      <div className="bg-[#0C0C10] border border-white/5 rounded-[32px] overflow-hidden shadow-2xl">
-        {entries.map((user, i) => (
-          <div key={i} className="flex items-center justify-between p-8 border-b border-white/5 hover:bg-[#14F195]/5 transition-all group">
-             <div className="flex items-center gap-6">
-                <span className="font-mono text-2xl font-bold text-white/10 group-hover:text-[#FFE500]">#0{user.rank}</span>
-                <div className="w-12 h-12 rounded-full bg-neutral-900 border border-white/10 flex items-center justify-center font-bold">{user.address.charAt(0)}</div>
+        {/* TOP 3 PODIUM */}
+        <div className="flex flex-col md:flex-row justify-center items-end gap-6 mb-20 h-[400px]">
+          {/* Silver - Rank 2 */}
+          <PodiumItem user={MOCK_LEADERS[1]} height="h-[250px]" color="border-slate-400" glow="shadow-[0_0_40px_rgba(148,163,184,0.2)]" />
+          
+          {/* Gold - Rank 1 */}
+          <PodiumItem user={MOCK_LEADERS[0]} height="h-[320px]" color="border-[#FFE500]" glow="shadow-[0_0_60px_rgba(255,229,0,0.3)]" isWinner />
+
+          {/* Bronze - Rank 3 */}
+          <PodiumItem user={MOCK_LEADERS[2]} height="h-[200px]" color="border-[#CD7F32]" glow="shadow-[0_0_40px_rgba(205,127,50,0.2)]" />
+        </div>
+
+        {/* RANK LIST */}
+        <div className="space-y-3">
+          {MOCK_LEADERS.slice(3).map((user, i) => (
+            <motion.div 
+              key={user.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="flex items-center justify-between p-6 glass rounded-2xl border border-white/5 hover:border-white/10 transition-all group"
+            >
+              <div className="flex items-center gap-6">
+                <span className="font-mono text-neutral-500 group-hover:text-white transition-colors">#0{user.rank}</span>
+                <div className="w-12 h-12 rounded-full bg-neutral-900 flex items-center justify-center text-xl">{user.avatar}</div>
                 <div>
-                   <h3 className="font-syne font-bold text-white uppercase tracking-tight">{user.address.slice(0, 8)}...</h3>
-                   <p className="text-[10px] text-white/30 font-mono">LEVEL_{user.level}_ARCHITECT</p>
+                  <h3 className="font-bold text-white uppercase tracking-tight">{user.name}</h3>
+                  <p className="text-[10px] font-mono text-neutral-500">LEVEL_{user.level}_ARCHITECT</p>
                 </div>
-             </div>
-             <div className="text-right">
-                <div className="text-2xl font-mono font-bold text-[#14F195]">{user.xp} XP</div>
-                <button onClick={() => shareOnTwitter(user.rank, user.xp)} className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-cyan-500 font-mono mt-1">SHARE_X_ENTRY</button>
-             </div>
-          </div>
-        ))}
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-black italic text-cyan-400">{user.xp} XP</div>
+                <div className="flex items-center justify-end gap-1 text-[9px] text-[#14F195] font-bold">
+                  <ArrowUp size={10} /> 12% GROWTH
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
+
+      {/* STICKY ME COMPONENT */}
+      <motion.div 
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black to-transparent z-[100]"
+      >
+        <div className="max-w-5xl mx-auto bg-[#00E5FF] text-black p-4 rounded-2xl flex items-center justify-between shadow-[0_-20px_50px_rgba(0,229,255,0.2)]">
+          <div className="flex items-center gap-4">
+             <div className="bg-black text-[#00E5FF] w-10 h-10 rounded-full flex items-center justify-center font-black">#{currentUserRank.rank}</div>
+             <span className="font-syne font-bold uppercase italic">Your_Progress: {currentUserRank.name}</span>
+          </div>
+          <div className="font-black text-xl italic">{currentUserRank.xp} XP</div>
+        </div>
+      </motion.div>
     </div>
+  );
+}
+
+function PodiumItem({ user, height, color, glow, isWinner = false }: any) {
+  return (
+    <motion.div 
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className={`relative flex flex-col items-center justify-end w-full md:w-64 ${height}`}
+    >
+      {isWinner && <Crown className="text-[#FFE500] absolute -top-12 animate-bounce" size={40} />}
+      <div className={`w-24 h-24 rounded-full bg-neutral-900 border-4 ${color} ${glow} flex items-center justify-center text-4xl mb-4`}>
+        {user.avatar}
+      </div>
+      <div className={`w-full bg-[#0C0C10] border-t-2 ${color} rounded-t-3xl p-6 text-center shadow-2xl`}>
+        <h3 className="font-bold text-white uppercase tracking-tighter truncate">{user.name}</h3>
+        <p className="text-cyan-500 font-black italic text-2xl">{user.xp} XP</p>
+      </div>
+    </motion.div>
   );
 }

@@ -1,31 +1,33 @@
 'use client';
-import React from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import Counter from '@/src/components/world-class/Counter';
-// Exact World Class UI logic from your file
-export default function WorldClassLanding() {
-  return (
-    <div className="relative min-h-screen bg-[#060608] text-white overflow-hidden">
-      {/* Cinematic Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-5%] w-[60vw] h-[60vw] bg-[#00E5FF]/5 rounded-full blur-[120px] animate-pulse" />
-      </div>
-      
-      <nav className="fixed top-0 w-full z-50 flex justify-between p-8 backdrop-blur-md">
-        <div className="font-syne font-bold text-xl uppercase tracking-tighter text-[#00E5FF]">Superteam</div>
-        <Link href="/dashboard" className="px-6 py-2 border border-cyan-500/30 rounded text-xs font-mono text-cyan-500 hover:bg-cyan-500/10">GO_TO_CONSOLE</Link>
-      </nav>
+import Link from 'next/link';
 
-      <section className="pt-48 px-8 max-w-7xl mx-auto">
-        <h1 className="font-syne font-extrabold text-[8rem] leading-[0.85] tracking-tighter mb-8">
-          Learn. <span className="text-white/20">Build.</span><br/><span className="text-[#FFE500]">Earn.</span>
+export default function EliteLanding() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <span className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono tracking-widest uppercase">
+          V2.0 is Live • Solana Global
+        </span>
+        <h1 className="text-7xl md:text-9xl font-syne font-black tracking-tighter leading-none">
+          LEVEL <span className="text-cyan-500 italic">UP.</span>
         </h1>
-        <div className="flex gap-6">
-          <Link href="/dashboard" className="px-10 py-5 bg-[#00E5FF] text-black font-syne font-bold rounded-xl shadow-2xl hover:scale-105 transition-transform">START_BUILDING →</Link>
-          <Link href="/leaderboard" className="px-10 py-5 bg-white/5 border border-white/10 rounded-xl font-syne font-bold hover:bg-white/10 transition-all">LEADERBOARD</Link>
+        <p className="max-w-2xl mx-auto text-neutral-400 font-mono text-sm md:text-base">
+          Master the blockchain with soulbound rewards, real-time analytics, and an elite developer community.
+        </p>
+        <div className="flex flex-col md:flex-row gap-4 justify-center pt-8">
+          <Link href="/dashboard" className="px-12 py-4 bg-white text-black font-syne font-bold rounded-full hover:bg-cyan-400 transition-all duration-500 hover:shadow-[0_0_40px_rgba(0,229,255,0.4)]">
+            ENTER_CONSOLE
+          </Link>
+          <Link href="/leaderboard" className="px-12 py-4 glass text-white font-syne font-bold rounded-full hover:bg-white/5 transition-all">
+            VIEW_RANKINGS
+          </Link>
         </div>
-      </section>
+      </motion.div>
     </div>
   );
 }
