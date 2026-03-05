@@ -12,21 +12,21 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 export default async function middleware(req: NextRequest) {
-  // A. Handle Localization
+  // A. Handle Localization logic
   const response = intlMiddleware(req);
 
   try {
-    // B. Fix: Use createMiddlewareClient (The correct function for Auth Helpers)
+    // FIX: Using createMiddlewareClient which is the correct function for Next.js Middleware
     const supabase = createMiddlewareClient({ req, res: response });
     
-    // Refresh session to keep the user logged in
+    // Refresh the user session
     const { data: { session } } = await supabase.auth.getSession();
 
     const { pathname } = req.nextUrl;
     const pathWithoutLocale = pathname.replace(/^\/(en|es|pt)/, '') || '/';
     const isPublicPage = publicPages.includes(pathWithoutLocale);
 
-    // C. Auth Guard
+    // B. Auth Guard
     if (!session && !isPublicPage) {
       const locale = pathname.split('/')[1] || 'en';
       return NextResponse.redirect(new URL(`/${locale}`, req.url));
