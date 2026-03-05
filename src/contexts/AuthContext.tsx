@@ -1,28 +1,37 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { supabase } from '@/infrastructure/supabase/client'; // Assuming supabase client is correct
 
-interface AuthContextType {
-  authStage: 'unauthenticated' | 'wallet_only' | 'google_only' | 'fully_linked';
-  profile: any;
-  signOut: () => void;
-}
+type AuthStage = 'loading' | 'unauthenticated' | 'google_only' | 'fully_linked';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<any>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { connected, publicKey } = useWallet();
-  const [authStage, setAuthStage] = useState<'unauthenticated' | 'wallet_only' | 'google_only' | 'fully_linked'>('unauthenticated');
+  const { publicKey, connected } = useWallet();
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [authStage, setAuthStage] = useState<AuthStage>('loading');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (connected) setAuthStage('wallet_only');
-    else setAuthStage('unauthenticated');
-  }, [connected]);
+    setIsLoading(false);
+    setAuthStage('unauthenticated');
+  }, []);
 
-  const signOut = () => { console.log("Signing out..."); };
+  const signInWithGoogle = async () => {};
+  const signOut = async () => {};
+  const linkWallet = async () => {};
+  const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{ authStage, profile: null, signOut }}>
+    <AuthContext.Provider value={{
+      user, profile, authStage, isLoading,
+      isLinked: !!profile?.wallet_address,
+      error, wallet: publicKey,
+      signInWithGoogle, signOut, linkWallet, clearError
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -30,6 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

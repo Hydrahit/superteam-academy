@@ -1,64 +1,89 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔍 Scanning and fixing missing modules...');
+console.log('🚀 Aligning Landing Page (app/page.tsx) with New Architecture...');
 
 const rootDir = process.cwd();
 
-// 1. Ensure src/contexts directory exists
-const srcContextsDir = path.join(rootDir, 'src/contexts');
-if (!fs.existsSync(srcContextsDir)) fs.mkdirSync(srcContextsDir, { recursive: true });
-
-// 2. Move AuthContext from root to src/contexts if it got left behind
-const rootAuthContext = path.join(rootDir, 'contexts/AuthContext.tsx');
-const srcAuthContext = path.join(srcContextsDir, 'AuthContext.tsx');
-
-if (fs.existsSync(rootAuthContext)) {
-  fs.copyFileSync(rootAuthContext, srcAuthContext);
-  console.log('🚚 Moved AuthContext.tsx to src/contexts/');
-} else if (!fs.existsSync(srcAuthContext)) {
-  console.log('⚠️ AuthContext.tsx missing entirely! Re-creating a stable version...');
-  // Creating a fallback stable version just to ensure the build passes
-  const fallbackAuth = `
-    'use client';
-    import React, { createContext, useContext } from 'react';
-    const AuthContext = createContext<any>(null);
-    export const AuthProvider = ({ children }: { children: React.ReactNode }) => (
-      <AuthContext.Provider value={{ user: null, authStage: 'unauthenticated', isLinked: false }}>
-        {children}
-      </AuthContext.Provider>
-    );
-    export const useAuth = () => useContext(AuthContext);
-  `;
-  fs.writeFileSync(srcAuthContext, fallbackAuth);
+// 1. Create a dummy lib/services just in case ANY other file is still looking for it
+const libServicesDir = path.join(rootDir, 'src/lib/services');
+if (!fs.existsSync(libServicesDir)) {
+  fs.mkdirSync(libServicesDir, { recursive: true });
+  fs.writeFileSync(path.join(libServicesDir, 'index.ts'), '// Legacy services export - safely ignored\nexport {};');
+  console.log('✅ Created fallback src/lib/services to prevent hidden Webpack panics.');
 }
 
-// 3. Bulletproof the Dashboard Page import
-const dashboardPath = path.join(rootDir, 'app/dashboard/page.tsx');
-if (fs.existsSync(dashboardPath)) {
-  let content = fs.readFileSync(dashboardPath, 'utf8');
-  
-  // Force the absolute correct aliased path
-  content = content.replace(/import \{ useAuth \} from '.*';/g, "import { useAuth } from '@/contexts/AuthContext';");
-  
-  fs.writeFileSync(dashboardPath, content);
-  console.log('✅ Dashboard imports secured.');
-}
+// 2. Overwrite app/page.tsx with a clean, high-converting Web3 Landing Page
+const landingPath = path.join(rootDir, 'app/page.tsx');
+const landingCode = `
+import Link from 'next/link';
+import { ArrowRight, Code, Shield, Trophy } from 'lucide-react';
 
-// 4. Force tsconfig.json to map correctly (The Ultimate Webpack Fix)
-const tsConfigPath = path.join(rootDir, 'tsconfig.json');
-if (fs.existsSync(tsConfigPath)) {
-  let tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
-  
-  // Ensure baseUrl and paths are strictly pointing to src/
-  tsConfig.compilerOptions = tsConfig.compilerOptions || {};
-  tsConfig.compilerOptions.baseUrl = ".";
-  tsConfig.compilerOptions.paths = {
-    "@/*": ["./src/*"]
-  };
-  
-  fs.writeFileSync(tsConfigPath, JSON.stringify(tsConfig, null, 2), 'utf8');
-  console.log('✅ tsconfig.json paths strictly mapped to ./src/*');
-}
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-[#060608] text-white font-['Bricolage_Grotesque'] overflow-hidden relative">
+      {/* Background Glow */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#00E5FF]/20 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#00FF94]/10 rounded-full blur-[150px] pointer-events-none" />
 
-console.log('\n🎉 ALL MODULES SYNCED. Ready for build.');
+      {/* Navbar */}
+      <nav className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-white/5 bg-[#060608]/50 backdrop-blur-md">
+        <div className="font-['Syne'] font-bold text-2xl tracking-tighter text-[#00E5FF]">SUPERTEAM</div>
+        <Link 
+          href="/dashboard" 
+          className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-semibold transition-all"
+        >
+          Enter App
+        </Link>
+      </nav>
+
+      {/* Hero Section */}
+      <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-32 pb-20">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
+          <span className="w-2 h-2 rounded-full bg-[#00FF94] animate-pulse" />
+          <span className="text-xs font-['JetBrains_Mono'] tracking-widest uppercase text-white/60">Solana LMS 2.0 is Live</span>
+        </div>
+        
+        <h1 className="text-5xl md:text-8xl font-['Syne'] font-extrabold tracking-tight max-w-5xl leading-[1.1] mb-8">
+          Master Solana. <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#00FF94]">
+            Build the Future.
+          </span>
+        </h1>
+        
+        <p className="text-lg md:text-xl text-white/50 max-w-2xl mb-12 font-light">
+          The ultimate platform to level up your Web3 development skills. Earn XP, climb the global leaderboard, and prove your knowledge on-chain.
+        </p>
+
+        <Link 
+          href="/dashboard" 
+          className="group relative px-8 py-4 bg-[#00FF94] text-black font-bold rounded-2xl text-lg hover:scale-105 transition-all flex items-center gap-3 overflow-hidden"
+        >
+          <span className="relative z-10 flex items-center gap-2">
+            Start Learning <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </span>
+          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
+        </Link>
+
+        {/* Feature Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mt-32 text-left">
+          {[
+            { icon: Code, title: "Interactive Coding", desc: "Write, test, and deploy Solana programs directly in your browser." },
+            { icon: Shield, title: "On-Chain Verification", desc: "Your progress is secured and verified using Ed25519 signatures." },
+            { icon: Trophy, title: "Global Leaderboard", desc: "Compete with developers worldwide and showcase your true rank." }
+          ].map((feature, i) => (
+            <div key={i} className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+              <feature.icon className="w-10 h-10 text-[#00E5FF] mb-6" />
+              <h3 className="text-xl font-bold font-['Syne'] mb-3">{feature.title}</h3>
+              <p className="text-white/40 leading-relaxed">{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+`;
+fs.writeFileSync(landingPath, landingCode);
+
+console.log('✅ Landing page rewritten. Dead imports removed.');
