@@ -1,25 +1,37 @@
 'use client';
+
 import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { LogIn } from 'lucide-react';
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 
 export const AuthButton = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClientComponentClient();
 
   const handleLogin = async () => {
-    setIsLoading(true);
-    const toastId = toast.loading('Connecting to Google...');
     try {
+      // Guard triggers here. If keys are missing, it throws immediately.
+      const supabase = getSupabaseBrowserClient();
+      
+      setIsLoading(true);
+      const toastId = toast.loading('Connecting to Google...');
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: `${window.location.origin}/auth/callback` }
       });
+      
       if (error) throw error;
+      
     } catch (error: any) {
-      toast.error(`Login failed: ${error.message}`, { id: toastId });
+      console.error("[AuthButton] Login aborted:", error.message);
+      toast.error(
+        error.message.includes('Missing Supabase Keys') 
+          ? 'Cannot login: Environment keys missing!' 
+          : `Login failed: ${error.message}`
+      );
+    } finally {
       setIsLoading(false);
     }
   };
