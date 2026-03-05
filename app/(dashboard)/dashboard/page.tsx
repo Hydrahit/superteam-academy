@@ -1,31 +1,34 @@
 'use client';
-import { useAuth } from '@/src/store/AuthContext';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { Zap, Trophy, Flame } from 'lucide-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
-export default function Dashboard() {
-  const { isLinked } = useAuth();
+export default function WorldClassDashboard() {
   return (
-    <div className="min-h-screen p-8 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-12">
-        <h1 className="text-4xl font-bold font-syne text-white">Dashboard</h1>
-        <WalletMultiButton />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <Zap className="text-solana-green mb-2" />
-          <p className="text-neutral-400 text-sm">XP Progress</p>
-          <p className="text-2xl font-bold font-mono">2,450</p>
+    <div className="min-h-screen pt-24 px-8 max-w-7xl mx-auto">
+      <header className="mb-12">
+        <div className="text-[#FFE500] font-mono text-[10px] tracking-[0.2em] uppercase mb-2">// Status_Report</div>
+        <h1 className="font-syne font-extrabold text-5xl tracking-tighter text-white">Console</h1>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* Exact Card Style from your file */}
+        <div className="bg-[#0C0C10]/80 backdrop-blur-3xl border border-white/5 p-8 rounded-[20px] group hover:border-cyan-500/30 transition-all">
+          <Zap className="text-[#00E5FF] mb-4 w-8 h-8" />
+          <div className="text-4xl font-mono font-bold text-[#00E5FF] mb-1">2,450</div>
+          <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Soulbound XP</div>
         </div>
-        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <Trophy className="text-aura-cyan mb-2" />
-          <p className="text-neutral-400 text-sm">Level</p>
-          <p className="text-2xl font-bold font-mono">Lv. 4</p>
+        
+        <div className="bg-[#0C0C10]/80 backdrop-blur-3xl border border-white/5 p-8 rounded-[20px] group hover:border-[#A78BFA]/30 transition-all">
+          <Trophy className="text-[#A78BFA] mb-4 w-8 h-8" />
+          <div className="text-4xl font-mono font-bold text-[#A78BFA] mb-1">Lv. 4</div>
+          <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Architect Level</div>
         </div>
-        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <Flame className="text-aura-yellow mb-2" />
-          <p className="text-neutral-400 text-sm">Streak</p>
-          <p className="text-2xl font-bold font-mono">7 Days</p>
+
+        <div className="bg-[#0C0C10]/80 backdrop-blur-3xl border border-white/5 p-8 rounded-[20px] group hover:border-[#FFE500]/30 transition-all">
+          <Flame className="text-[#FFE500] mb-4 w-8 h-8" />
+          <div className="text-4xl font-mono font-bold text-[#FFE500] mb-1">7 Days</div>
+          <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Active Streak</div>
         </div>
       </div>
     </div>

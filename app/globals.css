@@ -1,6 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Bricolage+Grotesque:wght@300;400;600&family=JetBrains+Mono:wght@300;400;600&display=swap');
+
+:root {
+  --cyan: #00E5FF;
+  --yellow: #FFE500;
+  --purple: #A78BFA;
+  --bg: #060608;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-:root { --background: #060608; --foreground: #ffffff; }
-body { background-color: var(--background); color: var(--foreground); font-family: 'Bricolage Grotesque', sans-serif; }
-.glitch-text { text-shadow: 2px 0 #14F195, -2px 0 #9945FF; }
+
+body {
+  background: var(--bg);
+  color: rgba(240,240,240,0.9);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  overflow-x: hidden;
+}
+
+.glitch:hover::before { animation: glitch-1 0.35s steps(1) infinite; opacity: 0.75; }
+@keyframes glitch-1 {
+  0%,100% { clip-path: inset(0 0 96% 0); transform: translate(-4px,0); color: var(--cyan); }
+  50% { clip-path: inset(60% 0 22% 0); transform: translate(-3px,0); color: var(--yellow); }
+}
+
+.ticker-animation { animation: ticker 22s linear infinite; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
