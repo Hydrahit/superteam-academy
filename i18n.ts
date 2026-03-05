@@ -5,12 +5,10 @@ const locales = ['en', 'es', 'pt'];
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const locale = await requestLocale;
-  
-  // Safety check for supported locales
   if (!locales.includes(locale as any)) notFound();
 
   return {
-    locale, // This line fixes the 'none was returned' warning from your logs
+    locale, // This satisfies the 'locale is expected to be returned' warning
     messages: (await import(`./messages/${locale}.json`)).default
   };
 });
