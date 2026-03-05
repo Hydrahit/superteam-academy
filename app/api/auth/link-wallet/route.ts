@@ -1,39 +1,34 @@
 import { NextResponse } from 'next/server';
-import nacl from 'tweetnacl';
-import bs58 from 'bs58';
+import { AuthService } from '@/src/services/AuthService';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
-    try {
-        const body = await req.json();
-        const { userId, wallet, signature, timestamp } = body;
+  try {
+    const { userId, wallet, signature, nonce } = await req.json();
 
-        // 1. Reconstruct the exact message signed by the frontend
-        const message = `Bind Wallet to Superteam Academy\nUID: ${userId}\nTimestamp: ${timestamp}`;
-        const encodedMessage = new TextEncoder().encode(message);
-        
-        const signatureUint8 = bs58.decode(signature);
-        const publicKeyUint8 = bs58.decode(wallet);
+    // 1. Verify Cryptographic Signature
+    const isValid = AuthService.verifySignature(wallet, signature, nonce, userId);
 
-        // 2. Cryptographic Verification using tweetnacl
-        const isValid = nacl.sign.detached.verify(
-            encodedMessage,
-            signatureUint8,
-            publicKeyUint8
-        );
-
-        if (!isValid) {
-            return NextResponse.json({ success: false, error: 'INVALID_SIGNATURE' }, { status: 401 });
-        }
-
-        // TODO: Add your Supabase update logic here to link the wallet to the profile
-        
-        return NextResponse.json({ 
-            success: true, 
-            message: 'WALLET_LINKED_SUCCESSFULLY' 
-        });
-
-    } catch (e) {
-        console.error("API Error:", e);
-        return NextResponse.json({ success: false, error: 'SERVER_VERIFICATION_ERROR' }, { status: 500 });
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid Signature' }, { status: 401 });
     }
+
+    // 2. Update Database (Atomic Link)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY! // Note: Use Service Role for backend updates
+    );
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ wallet_address: wallet })
+      .eq('id', userId);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, message: 'Wallet Linked Successfully' });
+
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

@@ -1,48 +1,41 @@
-const fs = require('fs');
-const path = require('path');
+#!/bin/bash
 
-console.log('🛠️  Starting Universal Repair Operation...');
+echo "🔐 INITIATING ENVIRONMENT CONFIGURATION..."
+echo "------------------------------------------"
 
-const rootDir = process.cwd();
+# Prompt for Supabase Credentials
+read -p "Enter Supabase URL (e.g., https://xyz.supabase.co): " SB_URL
+read -p "Enter Supabase Anon Key: " SB_ANON
+read -p "Enter Supabase Service Role Key (Keep Secret): " SB_SERVICE
 
-// List of critical files to fix
-const filesToFix = [
-  path.join(rootDir, 'app/courses/[slug]/lessons/[id]/page.tsx'),
-  path.join(rootDir, 'app/courses/[slug]/page.tsx'),
-  path.join(rootDir, 'app/(platform)/dashboard/page.tsx'),
-  path.join(rootDir, 'app/leaderboard/page.tsx')
-];
+# Prompt for Solana Credentials
+read -p "Enter Solana RPC URL (Helius/Alchemy/Quicknode): " SOL_RPC
 
-filesToFix.forEach(filePath => {
-  if (fs.existsSync(filePath)) {
-    let content = fs.readFileSync(filePath, 'utf8');
-    
-    // Fix 1: Common Bash-to-JSX injection artifacts
-    content = content.replace(/\\\[/g, '[').replace(/\\\]/g, ']');
-    
-    // Fix 2: Repair common missing closing braces in return statements
-    if (content.includes('return (') && !content.trim().endsWith('}')) {
-       // Force a clean ending if the script cut it off
-       if (!content.includes(');')) {
-          content += '\n    </div>\n  );\n}';
-       }
-    }
+# Set Site URL (Default for local development)
+SITE_URL="http://localhost:3000"
 
-    // Fix 3: Ensure 'use client' is present
-    if (!content.includes("'use client'")) {
-      content = "'use client';\n" + content;
-    }
+# 1. Create .env.local file
+echo "✍️  Writing to .env.local..."
 
-    fs.writeFileSync(filePath, content, 'utf8');
-    console.log(`✅ Repaired: ${path.relative(rootDir, filePath)}`);
-  }
-});
+cat <<EOF > .env.local
+# --- SUPABASE CONFIGURATION ---
+NEXT_PUBLIC_SUPABASE_URL=$SB_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=$SB_ANON
+SUPABASE_SERVICE_ROLE_KEY=$SB_SERVICE
 
-// Fix 4: Final conflict check for [id] vs [lessonId]
-const lessonIdPath = path.join(rootDir, 'app/courses/[slug]/lessons/[lessonId]');
-if (fs.existsSync(lessonIdPath)) {
-  console.log('🚨 Conflict detected! Deleting duplicate [lessonId] folder...');
-  fs.rmSync(lessonIdPath, { recursive: true, force: true });
-}
+# --- SOLANA CONFIGURATION ---
+NEXT_PUBLIC_SOLANA_RPC_URL=$SOL_RPC
 
-console.log('\n🎉 Repair complete! Running one final Git Sync...');
+# --- APP CONFIGURATION ---
+NEXT_PUBLIC_SITE_URL=$SITE_URL
+EOF
+
+# 2. Add .env.local to .gitignore if not present
+if ! grep -q ".env.local" .gitignore; then
+  echo ".env.local" >> .gitignore
+  echo "🛡️  Added .env.local to .gitignore for security."
+fi
+
+echo "------------------------------------------"
+echo "✅ .env.local has been generated successfully!"
+echo "🚀 You are now ready to run 'npm run dev'."
