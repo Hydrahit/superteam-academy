@@ -1,11 +1,11 @@
-import { createMessagesServerClient } from '@supabase/auth-helpers-nextjs';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 
-// 1. Define supported locales (Same as your i18n config)
+// 1. i18n Configuration
 const locales = ['en', 'es', 'pt'];
-const publicPages = ['/', '/courses', '/auth/callback']; // Pages that don't need login
+const publicPages = ['/', '/auth/callback', '/courses'];
 
 const intlMiddleware = createIntlMiddleware({
   locales,
@@ -13,31 +13,45 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 export default async function middleware(req: NextRequest) {
-  // 2. Run i18n Middleware first to handle locale redirection
+  // A. Handle i18n first (This creates the initial response object)
   const response = intlMiddleware(req);
 
-  // 3. Initialize Supabase client to refresh session
-  const supabase = createMessagesServerClient({ req, res: response });
-  const { data: { session } } = await supabase.auth.getSession();
+  // B. Safety Check: If Env Vars are missing, skip auth to prevent 500 error
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const { pathname } = req.nextUrl;
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("🚨 [MIDDLEWARE ERROR]: Missing Supabase Env Vars on Vercel!");
+    return response; // Return i18n response anyway so the site doesn't crash
+  }
 
-  // 4. Check if the path is protected (e.g., /en/profile or /en/dashboard)
-  // We check if the path (minus the locale) is in our public list
-  const pathWithoutLocale = pathname.replace(/^\/(en|es|pt)/, '') || '/';
-  const isPublicPage = publicPages.includes(pathWithoutLocale);
+  try {
+    // C. Initialize Supabase with the i18n response
+    const supabase = createMiddlewareClient({ req, res: response });
+    
+    // This refreshes the session if it exists
+    const { data: { session } } = await supabase.auth.getSession();
 
-  // 5. Auth Guard: If not logged in and trying to access private page -> Redirect to Home
-  if (!session && !isPublicPage) {
-    const locale = pathname.split('/')[1] || 'en';
-    const loginUrl = new URL(`/${locale}`, req.url);
-    return NextResponse.redirect(loginUrl);
+    const { pathname } = req.nextUrl;
+    
+    // D. Auth Guard Logic
+    const pathWithoutLocale = pathname.replace(/^\/(en|es|pt)/, '') || '/';
+    const isPublicPage = publicPages.includes(pathWithoutLocale);
+
+    // Redirect to home if accessing protected page without session
+    if (!session && !isPublicPage) {
+      const locale = pathname.split('/')[1] || 'en';
+      return NextResponse.redirect(new URL(`/${locale}`, req.url));
+    }
+
+  } catch (error) {
+    console.error("⚠️ [MIDDLEWARE AUTH EXCEPTION]:", error);
   }
 
   return response;
 }
 
 export const config = {
-  // Match all pathnames except for internal ones and static files
+  // Matcher for all paths except static assets
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)']
 };
