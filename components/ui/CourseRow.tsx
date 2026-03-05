@@ -1,37 +1,59 @@
 'use client';
+
+import React from 'react';
 import { motion } from 'framer-motion';
-// FIX: Using our smart centralized router
-import { useRouter } from '@/lib/navigation';
+import { useRouter } from 'next/navigation'; 
+import { useLocale } from 'next-intl';
 import { PlayCircle, Zap } from 'lucide-react';
 
-export const CourseRow = ({ title, courses }: { title: string, courses: any[] }) => {
+interface Course {
+  id: string;
+  slug: string;
+  title: string;
+  xp: number;
+  desc?: string;
+}
+
+export const CourseRow = ({ title, courses }: { title: string, courses: Course[] }) => {
   const router = useRouter();
+  const locale = useLocale();
+
+  const handleNavigate = (slug: string) => {
+    console.log(`🎯 Navigating to: /${locale}/courses/${slug}`);
+    router.push(`/${locale}/courses/${slug}`);
+  };
 
   return (
     <div className="pl-12 py-8 group">
-      <h2 className="text-2xl font-syne font-bold text-white mb-6">{title}</h2>
-      <div className="flex gap-4 overflow-x-auto pb-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {courses.map(course => (
+      <h2 className="text-2xl font-syne font-bold text-white mb-6 uppercase tracking-tight">{title}</h2>
+      <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar">
+        {courses.map((course) => (
           <motion.div 
             key={course.id} 
-            whileHover={{ scale: 1.05, y: -5, zIndex: 10 }} 
-            whileTap={{ scale: 0.98 }}
-            // FIX: Clean path. The smart router auto-prepends the correct language!
-            onClick={() => router.push(`/courses/${course.slug}`)}
-            className="relative flex-none w-[320px] h-[180px] bg-neutral-900 border border-white/10 rounded-2xl overflow-hidden cursor-pointer shadow-xl hover:border-[#14F195]/50 transition-colors"
+            whileHover={{ scale: 1.05, y: -5 }} 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleNavigate(course.slug)}
+            className="relative flex-none w-[350px] h-[200px] bg-[#121214] border border-white/5 rounded-3xl overflow-hidden cursor-pointer shadow-2xl hover:border-[#14F195]/40 transition-all duration-500"
           >
-            <div className="absolute inset-0 p-6 flex flex-col justify-end bg-gradient-to-t from-black to-transparent z-10">
-              <h3 className="text-white font-bold text-lg font-syne leading-tight">{course.title}</h3>
-            </div>
+            {/* Background Aesthetic */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#14F195]/5 to-transparent opacity-50" />
             
-            <div className="absolute inset-0 bg-[#0C0C10]/95 p-6 opacity-0 hover:opacity-100 transition-opacity duration-300 z-20 flex flex-col justify-between backdrop-blur-sm">
-               <div>
-                 <p className="text-sm text-neutral-300 line-clamp-2">{course.desc || 'Master this course on Solana.'}</p>
-                 <span className="flex items-center gap-1 text-[#14F195] font-bold mt-3 text-xs uppercase tracking-widest"><Zap size={14}/> +{course.xp || 500} XP</span>
+            <div className="absolute inset-0 p-8 flex flex-col justify-end z-10">
+              <div className="flex items-center gap-2 mb-2 text-[#14F195]">
+                <Zap size={14} className="fill-current" />
+                <span className="text-[10px] font-black tracking-[0.2em] uppercase">{course.xp} XP REWARD</span>
+              </div>
+              <h3 className="text-white font-bold text-xl font-syne leading-tight group-hover:text-[#14F195] transition-colors">
+                {course.title}
+              </h3>
+            </div>
+
+            {/* Hover Overlay */}
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm p-8 opacity-0 hover:opacity-100 transition-opacity duration-300 z-20 flex flex-col justify-center items-center gap-4">
+               <p className="text-center text-sm text-white/70 italic">Click to enter the arena.</p>
+               <div className="p-3 bg-white text-black rounded-full">
+                 <PlayCircle size={32} />
                </div>
-               <button className="w-full py-2 bg-white text-black text-xs font-black uppercase rounded hover:bg-[#14F195] transition-colors flex items-center justify-center gap-2">
-                 <PlayCircle size={16} /> Enter Course
-               </button>
             </div>
           </motion.div>
         ))}

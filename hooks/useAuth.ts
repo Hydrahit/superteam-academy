@@ -1,42 +1,63 @@
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useWallet } from '@solana/wallet-adapter-react';
 import toast from 'react-hot-toast';
-import bs58 from 'bs58';
 
 export const useAuth = () => {
   const supabase = createClientComponentClient();
-  const { publicKey, signMessage } = useWallet();
+  const { publicKey, connected, disconnect } = useWallet();
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
 
-  const bindWallet = async () => {
-    if (!user) return toast.error('Login with Google first.');
-    if (!publicKey || !signMessage) return toast.error('Connect a Solana Wallet.');
+    getSession();
 
-    const nonce = `Bind Wallet to Superteam Academy\nUID: ${user.id}\nTime: ${Date.now()}`;
+    // Listen for auth changes (Login/Logout)
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const bindWalletToProfile = async () => {
+    if (!user || !publicKey) {
+      toast.error("Login with Google & Connect Wallet first!");
+      return;
+    }
+
+    const toastId = toast.loading("Linking Wallet to Profile...");
+
     try {
-      const messageBytes = new TextEncoder().encode(nonce);
-      const signatureBytes = await signMessage(messageBytes);
-      const signature = bs58.encode(signatureBytes);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ solana_wallet: publicKey.toBase58() })
+        .eq('id', user.id);
 
-      const res = await fetch('/api/verify-wallet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, publicKey: publicKey.toBase58(), signature, message: nonce })
-      });
-
-      const data = await res.json();
-      if (data.success) toast.success('Wallet cryptographically bound!');
-      else toast.error(data.error);
-    } catch (e) { toast.error('Signature rejected.'); }
+      if (error) throw error;
+      toast.success("Identity Linked Successfully!", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message, { id: toastId });
+    }
   };
 
-  return { user, bindWallet, isWalletConnected: !!publicKey };
+  return {
+    user,
+    publicKey,
+    isLoggedIn: !!user,
+    isWalletConnected: connected,
+    loading,
+    bindWalletToProfile,
+    signOut: () => supabase.auth.signOut()
+  };
 };

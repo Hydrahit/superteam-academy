@@ -10,8 +10,8 @@ const syne = Syne({ subsets: ["latin"], variable: "--font-syne" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Superteam Academy | Level Up on Solana",
-  description: "Elite Web3 Gamified Learning Experience",
+  title: "Superteam Academy | Elite Solana Training",
+  description: "Gamified Web3 onboarding for the best builders.",
 };
 
 export default async function RootLayout({
@@ -26,9 +26,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="dark">
       <body className={`${syne.variable} ${mono.variable} antialiased bg-[#0a0a0a] text-white`}>
-        {/* NextIntl MUST be the outermost for translations to work */}
         <NextIntlClientProvider messages={messages} locale={locale}>
-          {/* RootProvider handles mounting and Web3/Solana logic */}
           <RootProvider>
             {children}
             <Toaster position="bottom-right" />

@@ -1,34 +1,54 @@
-import { Navbar } from '@/src/components/layout/Navbar';
-import { FeaturedHero } from '@/src/components/ui/FeaturedHero';
-import { HorizontalRow } from '@/src/components/ui/HorizontalRow';
-import { BentoStats } from '@/src/components/ui/BentoStats';
+'use client';
 
-const MOCK_TRENDING = [
-  { id: '1', title: 'Solana 101: The Kernel', difficulty: 'Beginner', xp: 100, duration: '2 Hrs' },
-  { id: '2', title: 'Token Program Deep Dive', difficulty: 'Intermediate', xp: 300, duration: '4 Hrs' },
-  { id: '3', title: 'Building a DEX UI', difficulty: 'Intermediate', xp: 250, duration: '3 Hrs' },
-  { id: '4', title: 'Intro to Cryptography', difficulty: 'Beginner', xp: 150, duration: '1.5 Hrs' },
-  { id: '5', title: 'NFT Minting Engine', difficulty: 'Intermediate', xp: 400, duration: '5 Hrs' },
-];
+import React from 'react';
+import { Navbar } from '@/components/layout/Navbar';
+import { CourseRow } from '@/components/ui/CourseRow';
+import { motion } from 'framer-motion';
 
-const MOCK_PRO = [
-  { id: '6', title: 'Anchor Framework Mastery', difficulty: 'Pro', xp: 800, duration: '8 Hrs' },
-  { id: '7', title: 'Advanced SVM Internals', difficulty: 'Pro', xp: 1200, duration: '10 Hrs' },
-  { id: '8', title: 'Security & Auditing', difficulty: 'Pro', xp: 1000, duration: '6 Hrs' },
-  { id: '9', title: 'Cross-Program Invocations', difficulty: 'Pro', xp: 600, duration: '4 Hrs' },
-];
+export default function HomePage() {
+  // Debug log to verify client-side execution
+  console.log("💎 Superteam Academy: Home Page Loaded");
 
-export default function Home() {
   return (
-    <main className="min-h-screen bg-[#060608] selection:bg-[#14F195]/30">
+    <div className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
       <Navbar />
-      <FeaturedHero />
-      
-      <div className="relative z-20 -mt-10 bg-gradient-to-b from-transparent via-[#060608] to-[#060608]">
-        <HorizontalRow title="Trending_Now" courses={MOCK_TRENDING} />
-        <BentoStats />
-        <HorizontalRow title="Pro_Architect_Path" courses={MOCK_PRO} />
-      </div>
-    </main>
+
+      {/* --- ELITE DEBUG BUTTON --- */}
+      <button 
+        onClick={() => alert("SYSTEM IS LIVE! INTERACTIVITY 100%")}
+        className="fixed bottom-10 right-10 z-[9999] px-6 py-3 bg-[#14F195] text-black font-black rounded-full shadow-[0_0_30px_rgba(20,241,149,0.6)] hover:scale-110 active:scale-95 transition-all"
+      >
+        VERIFY CLICK ⚡
+      </button>
+
+      {/* Hero Content */}
+      <section className="relative h-[90vh] flex flex-col justify-center px-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-5xl"
+        >
+          <h1 className="text-7xl md:text-9xl font-syne font-black italic tracking-tighter leading-none mb-8">
+            BUILD THE <br/>
+            <span className="text-[#14F195]">FUTURE.</span>
+          </h1>
+          <p className="text-xl font-mono text-white/50 max-w-lg">
+            Elite Solana education engine for the next generation of builders.
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Courses Grid */}
+      <section className="pb-20">
+        <CourseRow 
+          title="Featured Courses" 
+          courses={[
+            { id: '1', slug: 'solana-101', title: 'Solana Dev 101', xp: 500 },
+            { id: '2', slug: 'rust-mastery', title: 'Rust Masterclass', xp: 1200 }
+          ]} 
+        />
+      </section>
+    </div>
   );
 }
