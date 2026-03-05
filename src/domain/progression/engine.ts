@@ -1,6 +1,5 @@
-
-/** * Strict progression math to pass Vitest suite 
- * Level = floor(sqrt(xp / 100)) 
+/** * Strict progression math to pass Vitest suite
+ * Level = floor(sqrt(xp / 100))
  */
 export class ProgressionEngine {
   static calculateLevel(xp: number): number {

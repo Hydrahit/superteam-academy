@@ -1,7 +1,6 @@
-
-'use client';
-import React from 'react';
-import { AppSidebar } from '@/presentation/components/AppSidebar';
+"use client";
+import React from "react";
+import { AppSidebar } from "@/presentation/components/AppSidebar";
 
 export const PlatformLayout = ({ children }: { children: React.ReactNode }) => {
   return (

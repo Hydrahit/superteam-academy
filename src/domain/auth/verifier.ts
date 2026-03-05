@@ -1,9 +1,12 @@
-
-import nacl from 'tweetnacl';
-import { PublicKey } from '@solana/web3.js';
+import nacl from "tweetnacl";
+import { PublicKey } from "@solana/web3.js";
 
 export class WalletVerifier {
-  static verify(message: string, signature: Uint8Array, publicKey: string): boolean {
+  static verify(
+    message: string,
+    signature: Uint8Array,
+    publicKey: string,
+  ): boolean {
     try {
       const pubKeyUint8 = new PublicKey(publicKey).toBytes();
       const messageUint8 = new TextEncoder().encode(message);

@@ -16,10 +16,10 @@ export class ProgressionEngine {
     const nextLevel = currentLevel + 1;
     const minXp = this.getXpForLevel(currentLevel);
     const maxXp = this.getXpForLevel(nextLevel);
-    
+
     return {
       percent: ((xp - minXp) / (maxXp - minXp)) * 100,
-      xpToNext: maxXp - xp
+      xpToNext: maxXp - xp,
     };
   }
 }
