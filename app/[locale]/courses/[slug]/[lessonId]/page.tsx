@@ -1,8 +1,4 @@
-'use client';
-import { useState } from 'react';
-import Editor from '@monaco-editor/react';
-import ReactMarkdown from 'react-markdown';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from "@/lib/supabase/client";
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import { Play } from 'lucide-react';
@@ -12,7 +8,7 @@ const MD_CONTENT = `# Building on Solana\nWrite a basic Rust program to handle a
 export default function LessonIDE({ params }: { params: { lessonId: string } }) {
   const [code, setCode] = useState('use anchor_lang::prelude::*;\n\ndeclare_id!("11111111111111111111111111111111");\n');
   const [loading, setLoading] = useState(false);
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const handleComplete = async () => {
     setLoading(true);

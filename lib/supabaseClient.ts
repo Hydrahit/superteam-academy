@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from "@/lib/supabase/client";
 
 // Static initialization to prevent "not a function" errors during bundling
 let supabaseInstance: any = null;
@@ -20,6 +20,6 @@ export const getSupabaseBrowserClient = () => {
     return null;
   }
 
-  supabaseInstance = createClientComponentClient();
+  supabaseInstance = createClient();
   return supabaseInstance;
 };
