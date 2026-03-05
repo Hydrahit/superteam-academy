@@ -1,17 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { LogIn } from 'lucide-react';
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 
 export const AuthButton = () => {
   const [loading, setLoading] = useState(false);
-  // Initialize inside the component to ensure it's client-side safe
-  const supabase = createClientComponentClient();
 
   const handleGoogleLogin = async () => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      toast.error("Auth System not ready.");
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -24,7 +28,7 @@ export const AuthButton = () => {
       if (error) throw error;
     } catch (error: any) {
       console.error("Login Error:", error.message);
-      toast.error("Auth failed. Check console.");
+      toast.error("Google Sign-in failed.");
       setLoading(false);
     }
   };
@@ -35,7 +39,7 @@ export const AuthButton = () => {
       whileTap={{ scale: 0.95 }}
       onClick={handleGoogleLogin}
       disabled={loading}
-      className="flex items-center gap-3 px-6 py-2.5 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-neutral-200 transition-all"
+      className="flex items-center gap-3 px-6 py-2.5 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl"
     >
       <LogIn size={16} />
       {loading ? 'Redirecting...' : 'Sign in with Google'}

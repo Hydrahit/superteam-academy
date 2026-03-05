@@ -1,16 +1,25 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
+// Static initialization to prevent "not a function" errors during bundling
+let supabaseInstance: any = null;
+
 export const getSupabaseBrowserClient = () => {
+  if (supabaseInstance) return supabaseInstance;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error(
-      "🚨 [SUPABASE FATAL ERROR]: Missing Environment Variables!\n" +
-      "Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in .env.local"
-    );
-    throw new Error("System Setup Incomplete: Missing Supabase Keys.");
+    console.error("🚨 [SUPABASE ERROR]: Missing Keys in .env.local");
+    return null;
   }
 
-  return createClientComponentClient();
+  // Defensive check for the helper function
+  if (typeof createClientComponentClient !== 'function') {
+    console.error("🚨 [SUPABASE FATAL]: createClientComponentClient is not a function. Check package versions!");
+    return null;
+  }
+
+  supabaseInstance = createClientComponentClient();
+  return supabaseInstance;
 };
