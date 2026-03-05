@@ -1,183 +1,126 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
-import { PlayCircle, CheckCircle2, Lock, Trophy, AlertCircle } from 'lucide-react';
-
-// Core AURA Components
-import { PlatformLayout } from '@/layouts/PlatformLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Alert } from '@/components/ui/Alert';
-
-// Auth & Backend Services
-import { useAuth } from '@/contexts/AuthContext';
-import { SupabaseProgressService } from '@/application/services/SupabaseProgressService';
+import Link from 'next/link';
+import { ArrowLeft, PlayCircle, Lock, Trophy, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function CoursePlayer({ params }: { params: { slug: string } }) {
-  const { wallet, isLinked } = useAuth();
+  // Mocking auth & completion state for the UI
+  const [isLinked, setIsLinked] = useState(true); // Set to false to see the "Link Wallet" state
   const [isCompleting, setIsCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Safe translation fallback
-  let t;
-  try {
-    t = useTranslations('Course');
-  } catch (e) {
-    t = (key: string) => key;
-  }
+  // Format slug to title (e.g., solana-foundations -> Solana Foundations)
+  const title = params.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-  // Mock Curriculum Data
-  const modules = [
-    { id: 1, title: "Module 1: Solana Core", lessons: [
-      { id: 'intro-to-pdas', title: "Introduction to PDAs", duration: "12 min", status: 'active' },
-      { id: 'cpi-basics', title: "Cross-Program Invocations", duration: "18 min", status: 'locked' }
-    ]},
-    { id: 2, title: "Module 2: Advanced Anchor", lessons: [
-      { id: 'anchor-state', title: "State Management", duration: "25 min", status: 'locked' }
-    ]}
-  ];
-
-  const handleCompleteLesson = async () => {
-    if (!isLinked || !wallet) {
-      setError("Please link your wallet in the dashboard to earn XP.");
-      return;
-    }
-
+  const handleComplete = () => {
     setIsCompleting(true);
-    setError(null);
-
-    try {
-      // 🚀 The Zero-Trust RPC Call
-      // We pass the wallet address and the lesson ID (params.slug)
-      const result = await SupabaseProgressService.completeLesson(
-        wallet.toBase58(), 
-        params.slug || 'intro-to-pdas'
-      );
-
-      if (result.success) {
-        setCompleted(true);
-      } else {
-        setError(result.error || "Failed to verify lesson completion.");
-      }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
-    } finally {
+    // Simulate RPC call delay
+    setTimeout(() => {
       setIsCompleting(false);
-    }
+      setCompleted(true);
+    }, 1500);
   };
 
   return (
-    <PlatformLayout>
-      <div className="flex flex-col lg:flex-row min-h-screen">
-        
-        {/* Main Content Area */}
-        <div className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto pb-32 lg:pb-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
-            
-            {/* Header */}
-            <div className="mb-8">
-              <Badge variant="outline" className="mb-4">{t('lessonModule')}</Badge>
-              <h1 className="text-3xl md:text-5xl font-['Syne'] font-bold text-white mb-4">
-                {t('lessonTitle')}
-              </h1>
-            </div>
-
-            {/* Video Player Placeholder */}
-            <Card noPadding className="aspect-video bg-black/40 border-border/50 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer mb-section">
-              <div className="absolute inset-0 bg-accent/5 group-hover:bg-accent/10 transition-colors" />
-              <PlayCircle className="w-20 h-20 text-accent opacity-80 group-hover:scale-110 transition-transform" />
-              <p className="mt-4 text-secondary font-['JetBrains_Mono'] text-sm tracking-widest uppercase">Play Lesson</p>
-            </Card>
-
-            {/* Lesson Content (Markdown Placeholder) */}
-            <div className="prose prose-invert prose-lg max-w-none text-secondary/80 font-light mb-section">
-              <p>Program Derived Addresses (PDAs) are one of the most important concepts in Solana development. They allow programs to control accounts without needing a private key...</p>
-              <h3>Why do we need PDAs?</h3>
-              <ul>
-                <li>Deterministic account derivation</li>
-                <li>Cross-Program Invocation (CPI) signing</li>
-                <li>Hashmap-like data structures on-chain</li>
-              </ul>
-            </div>
-
-            {/* Action Bar / Completion Logic */}
-            <div className="pt-8 border-t border-white/5 flex flex-col items-start gap-4">
-              <AnimatePresence mode="wait">
-                {error && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                    <Alert type="error" title="Verification Failed">{error}</Alert>
-                  </motion.div>
-                )}
-                
-                {completed ? (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full">
-                    <Alert type="success" title={t('successMessage')}>
-                      <div className="flex items-center gap-4 mt-4">
-                        <Button variant="secondary" className="gap-2">
-                          {t('nextLesson')} <PlayCircle className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </Alert>
-                  </motion.div>
-                ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
-                    <Button 
-                      onClick={handleCompleteLesson} 
-                      isLoading={isCompleting}
-                      disabled={!isLinked}
-                      className="w-full md:w-auto gap-2"
-                    >
-                      {!isLinked ? <Lock className="w-4 h-4" /> : <Trophy className="w-4 h-4" />}
-                      {!isLinked ? t('linkToEarn') : t('completeLesson')}
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-          </motion.div>
-        </div>
-
-        {/* Right Sidebar: Curriculum */}
-        <div className="w-full lg:w-80 border-l border-white/5 bg-canvas/30 p-6 hidden lg:block overflow-y-auto">
-          <h3 className="font-['Syne'] font-bold text-lg mb-6">{t('curriculum')}</h3>
+    <main className="min-h-screen bg-neutral-950 text-white font-sans flex flex-col lg:flex-row">
+      
+      {/* LEFT: Video Player & Content */}
+      <div className="flex-1 p-6 md:p-10 lg:p-16 overflow-y-auto pb-32 lg:pb-16 border-r border-white/5">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
           
-          <div className="space-y-8">
-            {modules.map((mod) => (
-              <div key={mod.id}>
-                <h4 className="text-sm font-semibold text-secondary mb-4 uppercase tracking-wider">{mod.title}</h4>
-                <div className="space-y-2">
-                  {mod.lessons.map((lesson) => (
+          <Link href="/courses" className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#14F195] transition-colors mb-8 font-mono text-sm">
+            <ArrowLeft className="w-4 h-4" /> back_to_curriculum
+          </Link>
+
+          <div className="mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold font-syne mb-2">{title}: Introduction</h1>
+            <p className="text-neutral-400 font-mono text-sm">Module 1 • Lesson 1</p>
+          </div>
+
+          {/* Video Placeholder */}
+          <div className="aspect-video w-full bg-neutral-900 rounded-2xl border border-white/10 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer mb-10 shadow-2xl">
+            <div className="absolute inset-0 bg-[#14F195]/5 group-hover:bg-[#14F195]/10 transition-colors" />
+            <PlayCircle className="w-20 h-20 text-[#14F195] opacity-80 group-hover:scale-110 transition-transform" />
+            <span className="mt-4 font-mono text-sm tracking-widest text-neutral-400 uppercase">Play Lesson</span>
+          </div>
+
+          {/* Lesson Content */}
+          <div className="prose prose-invert prose-lg max-w-none text-neutral-300 font-light mb-12">
+            <h3 className="text-xl font-bold text-white mb-4">Understanding the Basics</h3>
+            <p className="mb-4">In this lesson, we cover the fundamental architecture of the Solana blockchain. Unlike traditional EVM chains, Solana separates state (Accounts) from logic (Programs).</p>
+            <p className="mb-4">By the end of this module, you will understand how to structure your data and why Program Derived Addresses (PDAs) are crucial for secure state management.</p>
+          </div>
+
+          {/* Action Bar */}
+          <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="text-center sm:text-left">
+              <h4 className="font-bold text-lg mb-1">Claim your XP</h4>
+              <p className="text-sm text-neutral-400">Finish the video to verify your completion on-chain.</p>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              {completed ? (
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-3 text-[#14F195] font-bold px-6 py-3 bg-[#14F195]/10 rounded-xl border border-[#14F195]/20">
+                  <CheckCircle2 className="w-5 h-5" /> +100 XP Claimed!
+                </motion.div>
+              ) : (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <button 
+                    onClick={handleComplete}
+                    disabled={!isLinked || isCompleting}
+                    className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold transition-all shadow-lg ${
+                      !isLinked 
+                        ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                        : 'bg-[#14F195] text-black hover:bg-[#10c97b] hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(20,241,149,0.3)]'
+                    }`}
+                  >
+                    {!isLinked ? <Lock className="w-5 h-5" /> : <Trophy className="w-5 h-5" />}
+                    {isCompleting ? 'Verifying...' : !isLinked ? 'Link Wallet to Claim' : 'Complete & Claim XP'}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+        </motion.div>
+      </div>
+
+      {/* RIGHT: Sidebar Modules list */}
+      <div className="w-full lg:w-96 bg-neutral-900/50 p-8 overflow-y-auto">
+        <h3 className="font-syne font-bold text-xl mb-8">Curriculum</h3>
+        
+        <div className="space-y-8">
+          {[1, 2, 3].map((mod) => (
+            <div key={mod}>
+              <h4 className="text-xs font-bold text-neutral-500 mb-4 uppercase tracking-widest">Module {mod}</h4>
+              <div className="space-y-2">
+                {[1, 2, 3].map((lesson) => {
+                  const isActive = mod === 1 && lesson === 1;
+                  return (
                     <div 
-                      key={lesson.id} 
-                      className={`flex items-center justify-between p-3 radius-continuous border ${
-                        lesson.status === 'active' 
-                          ? 'bg-accent/10 border-accent/20 text-primary' 
-                          : 'bg-transparent border-transparent text-secondary hover:bg-white/5'
+                      key={lesson} 
+                      className={`flex items-center justify-between p-4 rounded-xl border ${
+                        isActive 
+                          ? 'bg-[#14F195]/10 border-[#14F195]/30 text-white' 
+                          : 'bg-transparent border-transparent text-neutral-400 hover:bg-white/5'
                       } cursor-pointer transition-colors`}
                     >
-                      <div className="flex items-center gap-3 truncate">
-                        {lesson.status === 'active' ? (
-                          <PlayCircle className="w-4 h-4 text-accent shrink-0" />
-                        ) : (
-                          <Lock className="w-4 h-4 opacity-50 shrink-0" />
-                        )}
-                        <span className="text-sm truncate">{lesson.title}</span>
+                      <div className="flex items-center gap-3">
+                        {isActive ? <PlayCircle className="w-4 h-4 text-[#14F195]" /> : <Lock className="w-4 h-4 opacity-50" />}
+                        <span className="text-sm font-medium">Lesson {lesson}</span>
                       </div>
-                      <span className="text-[10px] font-['JetBrains_Mono'] opacity-50">{lesson.duration}</span>
+                      <span className="text-[10px] font-mono opacity-50">12m</span>
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-
       </div>
-    </PlatformLayout>
+
+    </main>
   );
 }

@@ -1,58 +1,72 @@
 'use client';
-import { useState } from 'react';
-import Link from 'next/link';
-import { Search, BookOpen, Zap } from 'lucide-react';
 
-const COURSES = [
-  { id: '1', slug: 'solana-fundamentals', title: 'Solana Fundamentals', track: 'Foundation', diff: 'Beginner', xp: 600, lessons: 12, desc: 'Master accounts, PDAs, and the Solana programming model.', accent: '#00E5FF' },
-  { id: '2', slug: 'anchor-dev', title: 'Anchor Development', track: 'Programs', diff: 'Intermediate', xp: 900, lessons: 18, desc: 'Write secure, fast smart contracts using the Anchor framework.', accent: '#FFE500' },
-  { id: '3', slug: 'token-2022', title: 'Token-2022 Extensions', track: 'Tokens', diff: 'Advanced', xp: 700, lessons: 14, desc: 'Deep dive into transfer hooks, soulbound tokens, and metadata.', accent: '#A78BFA' }
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { ArrowLeft, BookOpen, Trophy, PlayCircle } from 'lucide-react';
+
+const allCourses = [
+  { slug: "solana-foundations", track: "Foundation", title: "Solana Foundations", desc: "Master the core concepts of accounts, PDAs, and the Solana programming model.", lessons: 12, xp: 600, level: "Beginner", accent: "from-[#00E5FF]/20 to-transparent", border: "hover:border-[#00E5FF]/50", color: "text-[#00E5FF]" },
+  { slug: "anchor-development", track: "Programs", title: "Anchor Development", desc: "Write secure and optimized smart contracts using the Anchor framework.", lessons: 18, xp: 900, level: "Intermediate", accent: "from-[#FFE500]/20 to-transparent", border: "hover:border-[#FFE500]/50", color: "text-[#FFE500]" },
+  { slug: "token-2022", track: "Tokens", title: "Token-2022 Extensions", desc: "Learn how to mint and manage next-gen tokens with custom transfer hooks.", lessons: 14, xp: 700, level: "Advanced", accent: "from-[#A78BFA]/20 to-transparent", border: "hover:border-[#A78BFA]/50", color: "text-[#A78BFA]" },
+  { slug: "defi-solana", track: "DeFi", title: "DeFi on Solana", desc: "Build AMMs, order books, and lending protocols from scratch.", lessons: 20, xp: 1000, level: "Expert", accent: "from-[#14F195]/20 to-transparent", border: "hover:border-[#14F195]/50", color: "text-[#14F195]" },
 ];
 
-export default function CoursesPage() {
-  const [search, setSearch] = useState('');
-  const filtered = COURSES.filter(c => c.title.toLowerCase().includes(search.toLowerCase()));
-
+export default function CourseCatalog() {
   return (
-    <div className="min-h-screen bg-[#060608] text-white pt-24 pb-20 px-4 md:px-8 font-['Bricolage_Grotesque']">
+    <main className="min-h-screen bg-neutral-950 text-white font-sans pt-24 px-6 pb-20">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-12">
-          <p className="font-['JetBrains_Mono'] text-[#FFE500] text-[10px] uppercase tracking-widest mb-2">// The_Curriculum</p>
-          <h1 className="font-['Syne'] text-4xl md:text-6xl font-bold tracking-tight mb-6">Explore <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#A78BFA]">Knowledge.</span></h1>
-          
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <input 
-              type="text" placeholder="Search courses..." 
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[#00E5FF]/50 transition-colors"
-              value={search} onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
+        
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-16">
+          <Link href="/" className="inline-flex items-center gap-2 text-neutral-400 hover:text-[#14F195] transition-colors mb-8 font-mono text-sm">
+            <ArrowLeft className="w-4 h-4" /> back_to_home
+          </Link>
+          <h1 className="text-4xl md:text-6xl font-bold font-syne mb-4">Curriculum</h1>
+          <p className="text-lg text-neutral-400 max-w-2xl">Select a track to begin your journey. Every lesson completed earns you soulbound XP on the Solana network.</p>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map(course => (
-            <Link key={course.id} href={`/courses/${course.slug}`}>
-              <div className="bg-[#0C0C10]/80 border border-white/[0.07] rounded-3xl p-6 md:p-8 backdrop-blur-xl transition-all duration-300 hover:border-[#00E5FF]/40 cursor-pointer h-full flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-6">
-                    <span className="font-['JetBrains_Mono'] text-[9px] uppercase tracking-[0.12em] px-3 py-1 rounded border border-white/10 bg-white/5">{course.track}</span>
-                    <span className="font-['JetBrains_Mono'] text-[10px] text-white/30">{course.diff}</span>
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+          {allCourses.map((c, i) => (
+            <motion.div
+              key={c.slug}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <Link href={`/courses/${c.slug}`}>
+                <div className={`group relative h-full p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden transition-all duration-300 ${c.border} hover:-translate-y-1`}>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${c.accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-6">
+                      <span className={`text-xs font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-md bg-white/5 border border-white/10 ${c.color}`}>
+                        {c.track}
+                      </span>
+                      <span className="text-sm font-mono text-neutral-500 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" /> {c.level}
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-3xl font-bold font-syne mb-4">{c.title}</h3>
+                    <p className="text-neutral-400 mb-8 flex-1">{c.desc}</p>
+                    
+                    <div className="flex justify-between items-center pt-6 border-t border-white/10 mt-auto">
+                      <div className="flex gap-4 text-sm font-mono text-neutral-400">
+                        <span>{c.lessons} lessons</span>
+                        <span className="text-[#FFE500] flex items-center gap-1"><Trophy className="w-4 h-4"/> {c.xp} XP</span>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#14F195] group-hover:text-black transition-colors">
+                        <PlayCircle className="w-5 h-5" />
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-['Syne'] text-2xl font-bold mb-3">{course.title}</h3>
-                  <p className="text-sm text-white/40 leading-relaxed font-light mb-6">{course.desc}</p>
                 </div>
-                <div className="flex items-center justify-between border-t border-white/[0.05] pt-4 mt-auto">
-                  <div className="flex gap-4">
-                    <span className="font-['JetBrains_Mono'] text-[11px] text-white/40 flex items-center gap-1.5"><BookOpen className="w-3 h-3"/> {course.lessons}</span>
-                    <span className="font-['JetBrains_Mono'] text-[11px] text-[#FFE500] flex items-center gap-1.5"><Zap className="w-3 h-3"/> {course.xp} XP</span>
-                  </div>
-                </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
