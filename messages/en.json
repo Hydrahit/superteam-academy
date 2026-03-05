@@ -13,5 +13,17 @@
     "resume": "Resume Lesson",
     "complete": "Complete Lesson",
     "curriculum": "Curriculum"
+  },
+  "Landing": {
+    "heroTitle": "Master Solana.",
+    "heroHighlight": "Build the Future.",
+    "heroSub": "The ultimate platform to level up your Web3 development skills. Earn XP, climb the global leaderboard, and prove your knowledge on-chain.",
+    "cta": "Start Learning",
+    "feat1Title": "Interactive Coding",
+    "feat1Desc": "Write, test, and deploy Solana programs directly in your browser.",
+    "feat2Title": "On-Chain Verification",
+    "feat2Desc": "Your progress is secured and verified using Ed25519 signatures.",
+    "feat3Title": "Global Leaderboard",
+    "feat3Desc": "Compete with developers worldwide and showcase your true rank."
   }
 }

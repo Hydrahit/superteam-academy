@@ -1,135 +1,180 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔒 INITIATING SECURITY CORE: Generating Ed25519 Verification and RPC Progression Engines...');
+console.log('🚀 Upgrading Landing Page to World-Class Standards...');
 
 const rootDir = process.cwd();
 
-const ensureDir = (dirPath) => {
-  const fullPath = path.join(rootDir, dirPath);
-  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
+// 1. UPDATE DICTIONARIES (Strict i18n Compliance)
+const updateDictionary = (lang, newContent) => {
+  const filePath = path.join(rootDir, `messages/${lang}.json`);
+  let content = {};
+  if (fs.existsSync(filePath)) {
+    content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  }
+  content["Landing"] = newContent;
+  fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
+  console.log(`✅ Updated ${lang}.json dictionary`);
 };
 
-// 1. CREATE DIRECTORIES
-ensureDir('src/domain/auth');
-ensureDir('src/application/services');
-ensureDir('src/infrastructure/supabase');
+updateDictionary('en', {
+  "heroTitle": "Master Solana.",
+  "heroHighlight": "Build the Future.",
+  "heroSub": "The ultimate platform to level up your Web3 development skills. Earn XP, climb the global leaderboard, and prove your knowledge on-chain.",
+  "cta": "Start Learning",
+  "feat1Title": "Interactive Coding",
+  "feat1Desc": "Write, test, and deploy Solana programs directly in your browser.",
+  "feat2Title": "On-Chain Verification",
+  "feat2Desc": "Your progress is secured and verified using Ed25519 signatures.",
+  "feat3Title": "Global Leaderboard",
+  "feat3Desc": "Compete with developers worldwide and showcase your true rank."
+});
 
-// 2. DOMAIN: Ed25519 Cryptographic Verifier (Strictly isolated for testing)
-const ed25519Code = `import nacl from 'tweetnacl';
-import { PublicKey } from '@solana/web3.js';
-import bs58 from 'bs58';
+updateDictionary('pt', {
+  "heroTitle": "Domine a Solana.",
+  "heroHighlight": "Construa o Futuro.",
+  "heroSub": "A plataforma definitiva para elevar suas habilidades de desenvolvimento Web3. Ganhe XP, suba no ranking global e prove seu conhecimento na blockchain.",
+  "cta": "Comece a Aprender",
+  "feat1Title": "Codificação Interativa",
+  "feat1Desc": "Escreva, teste e implante programas Solana diretamente no seu navegador.",
+  "feat2Title": "Verificação On-Chain",
+  "feat2Desc": "Seu progresso é protegido e verificado usando assinaturas Ed25519.",
+  "feat3Title": "Ranking Global",
+  "feat3Desc": "Compita com desenvolvedores do mundo todo e mostre sua verdadeira posição."
+});
 
-export class Ed25519Verifier {
-  /**
-   * Cryptographically verifies a wallet signature against a backend-generated nonce.
-   */
-  static verifySignature(nonce: string, signature: Uint8Array, publicKeyString: string): boolean {
-    try {
-      const publicKey = new PublicKey(publicKeyString);
-      const messageBytes = new TextEncoder().encode(nonce);
-      return nacl.sign.detached.verify(messageBytes, signature, publicKey.toBytes());
-    } catch (error) {
-      console.error('Signature verification failed:', error);
-      return false;
-    }
-  }
+// 2. REWRITE THE LANDING PAGE (app/page.tsx)
+const landingPath = path.join(rootDir, 'app/page.tsx');
+const landingCode = `'use client';
 
-  /**
-   * Formats the signature for Supabase RPC transmission
-   */
-  static encodeSignature(signature: Uint8Array): string {
-    return bs58.encode(signature);
-  }
-}
-`;
-fs.writeFileSync(path.join(rootDir, 'src/domain/auth/Ed25519Verifier.ts'), ed25519Code);
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ArrowRight, Code, Shield, Trophy } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
-// 3. APPLICATION: Supabase Progression Service (No Client-Side Math)
-const progressServiceCode = `import { supabase } from '@/infrastructure/supabase/client';
-
-export interface ProgressionResult {
-  success: boolean;
-  newXp: number;
-  newLevel: number;
-  error?: string;
-}
-
-export class SupabaseProgressService {
-  /**
-   * Submits proof of lesson completion to the backend. 
-   * NEVER sends raw XP amounts from the client.
-   */
-  static async completeLesson(walletAddress: string, lessonId: string, proofTxId?: string): Promise<ProgressionResult> {
-    try {
-      // Calling the secure PostgreSQL RPC
-      const { data, error } = await supabase.rpc('verify_and_reward_lesson', {
-        p_wallet: walletAddress,
-        p_lesson_id: lessonId,
-        p_proof_tx: proofTxId || null
-      });
-
-      if (error) throw new Error(error.message);
-
-      return {
-        success: true,
-        newXp: data.total_xp,
-        newLevel: data.current_level
+export default function LandingPage() {
+  // Gracefully fallback to English if next-intl context isn't fully wrapped at the root yet
+  let t;
+  try {
+    t = useTranslations('Landing');
+  } catch (e) {
+    t = (key: string) => {
+      const fallback = {
+        heroTitle: "Master Solana.",
+        heroHighlight: "Build the Future.",
+        heroSub: "The ultimate platform to level up your Web3 development skills. Earn XP, climb the global leaderboard, and prove your knowledge on-chain.",
+        cta: "Start Learning",
+        feat1Title: "Interactive Coding",
+        feat1Desc: "Write, test, and deploy Solana programs directly in your browser.",
+        feat2Title: "On-Chain Verification",
+        feat2Desc: "Your progress is secured and verified using Ed25519 signatures.",
+        feat3Title: "Global Leaderboard",
+        feat3Desc: "Compete with developers worldwide and showcase your true rank."
       };
-    } catch (error: any) {
-      return { success: false, newXp: 0, newLevel: 0, error: error.message };
-    }
+      return fallback[key as keyof typeof fallback];
+    };
   }
 
-  /**
-   * Fetches the current synchronized state directly from the DB
-   */
-  static async getUserState(walletAddress: string) {
-    const { data, error } = await supabase.rpc('get_user_stats', { p_wallet: walletAddress });
-    if (error) throw error;
-    return data;
-  }
+  const features = [
+    { icon: Code, title: t('feat1Title'), desc: t('feat1Desc') },
+    { icon: Shield, title: t('feat2Title'), desc: t('feat2Desc') },
+    { icon: Trophy, title: t('feat3Title'), desc: t('feat3Desc') }
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#060608] text-white font-['Bricolage_Grotesque'] overflow-hidden relative selection:bg-[#00FF94] selection:text-black">
+      {/* Dynamic Background Glows */}
+      <motion.div 
+        animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#00E5FF]/20 rounded-full blur-[150px] pointer-events-none" 
+      />
+      <motion.div 
+        animate={{ scale: [1, 1.5, 1], opacity: [0.1, 0.2, 0.1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#00FF94]/10 rounded-full blur-[150px] pointer-events-none" 
+      />
+
+      {/* Navbar */}
+      <nav className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-white/5 bg-[#060608]/50 backdrop-blur-md">
+        <div className="font-['Syne'] font-bold text-2xl tracking-tighter text-[#00E5FF]">SUPERTEAM</div>
+        <Link 
+          href="/dashboard" 
+          className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-semibold transition-all"
+        >
+          Enter App
+        </Link>
+      </nav>
+
+      {/* Hero Section */}
+      <main className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-32 pb-20">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#00FF94] animate-pulse" />
+          <span className="text-xs font-['JetBrains_Mono'] tracking-widest uppercase text-white/60">Solana LMS 2.0 is Live</span>
+        </motion.div>
+        
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-5xl md:text-8xl font-['Syne'] font-extrabold tracking-tight max-w-5xl leading-[1.1] mb-8"
+        >
+          {t('heroTitle')} <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#00FF94]">
+            {t('heroHighlight')}
+          </span>
+        </motion.h1>
+        
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-lg md:text-xl text-white/50 max-w-2xl mb-12 font-light"
+        >
+          {t('heroSub')}
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Link 
+            href="/dashboard" 
+            className="group relative px-8 py-4 bg-[#00FF94] text-black font-bold rounded-2xl text-lg hover:scale-105 transition-all flex items-center gap-3 overflow-hidden"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              {t('cta')} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </span>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
+          </Link>
+        </motion.div>
+
+        {/* Feature Grid */}
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl mt-32 text-left"
+        >
+          {features.map((feature, i) => (
+            <div key={i} className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
+              <feature.icon className="w-10 h-10 text-[#00E5FF] mb-6 group-hover:scale-110 transition-transform" />
+              <h3 className="text-xl font-bold font-['Syne'] mb-3">{feature.title}</h3>
+              <p className="text-white/40 leading-relaxed">{feature.desc}</p>
+            </div>
+          ))}
+        </motion.div>
+      </main>
+    </div>
+  );
 }
 `;
-fs.writeFileSync(path.join(rootDir, 'src/application/services/SupabaseProgressService.ts'), progressServiceCode);
+fs.writeFileSync(landingPath, landingCode);
 
-// 4. INFRASTRUCTURE: The Secure Wallet Linker Hook
-const walletLinkerCode = `'use client';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { supabase } from '@/infrastructure/supabase/client';
-import bs58 from 'bs58';
-
-export function useSecureWalletLinker() {
-  const { publicKey, signMessage } = useWallet();
-
-  const linkSecurely = async (userId: string) => {
-    if (!publicKey || !signMessage) throw new Error('Wallet not fully connected.');
-
-    // Step 1: Request a secure nonce from the backend
-    const { data: nonceData, error: nonceError } = await supabase.rpc('generate_auth_nonce', { p_user_id: userId });
-    if (nonceError) throw new Error('Failed to generate secure nonce.');
-    const nonce = nonceData.nonce;
-
-    // Step 2: Prompt user to sign the exact nonce
-    const messageBytes = new TextEncoder().encode(\`Sign this message to verify wallet ownership for Superteam Academy:\\n\${nonce}\`);
-    const signature = await signMessage(messageBytes);
-
-    // Step 3: Send signature back to RPC for cryptographic verification and DB mutation
-    const { data: linkData, error: linkError } = await supabase.rpc('verify_and_link_wallet', {
-      p_user_id: userId,
-      p_wallet_address: publicKey.toBase58(),
-      p_signature: bs58.encode(signature),
-      p_nonce: nonce
-    });
-
-    if (linkError) throw new Error(linkError.message);
-    return linkData;
-  };
-
-  return { linkSecurely };
-}
-`;
-fs.writeFileSync(path.join(rootDir, 'src/infrastructure/supabase/useSecureWalletLinker.ts'), walletLinkerCode);
-
-console.log('✅ SECURITY CORE INJECTED.');
-console.log('Modules created: Ed25519Verifier, SupabaseProgressService, and useSecureWalletLinker.');
+console.log('✅ Landing Page Upgraded. Framer Motion and next-intl safely integrated.');

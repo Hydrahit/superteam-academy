@@ -13,5 +13,17 @@
     "resume": "Retomar Lição",
     "complete": "Concluir Lição",
     "curriculum": "Currículo"
+  },
+  "Landing": {
+    "heroTitle": "Domine a Solana.",
+    "heroHighlight": "Construa o Futuro.",
+    "heroSub": "A plataforma definitiva para elevar suas habilidades de desenvolvimento Web3. Ganhe XP, suba no ranking global e prove seu conhecimento na blockchain.",
+    "cta": "Comece a Aprender",
+    "feat1Title": "Codificação Interativa",
+    "feat1Desc": "Escreva, teste e implante programas Solana diretamente no seu navegador.",
+    "feat2Title": "Verificação On-Chain",
+    "feat2Desc": "Seu progresso é protegido e verificado usando assinaturas Ed25519.",
+    "feat3Title": "Ranking Global",
+    "feat3Desc": "Compita com desenvolvedores do mundo todo e mostre sua verdadeira posição."
   }
 }
