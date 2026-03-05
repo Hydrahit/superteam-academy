@@ -1,64 +1,53 @@
 #!/bin/bash
 
-echo "⚡ OPTIMIZING ASSET PRELOADING..."
+echo "🩹 FIXING CLIENT-SIDE AUTH TYPEERROR..."
 
-# Update the layout with optimized font loading
-cat << 'EOF' > app/\[locale\]/layout.tsx
-import type { Metadata } from "next";
-import { Syne, JetBrains_Mono } from "next/font/google";
-import "@/app/globals.css";
-import { RootProvider } from "@/components/providers/root-provider";
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import { Toaster } from 'react-hot-toast';
+# Update AuthButton with a more robust initialization pattern
+cat << 'EOF' > components/ui/AuthButton.tsx
+'use client';
 
-// Optimize: Set preload to true but ensure display is 'swap'
-const syne = Syne({ 
-  subsets: ["latin"], 
-  variable: "--font-syne",
-  display: 'swap',
-  preload: true 
-});
+import { useState, useEffect } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { LogIn } from 'lucide-react';
 
-const mono = JetBrains_Mono({ 
-  subsets: ["latin"], 
-  variable: "--font-mono",
-  display: 'swap',
-  preload: true 
-});
+export const AuthButton = () => {
+  const [loading, setLoading] = useState(false);
+  // Initialize inside the component to ensure it's client-side safe
+  const supabase = createClientComponentClient();
 
-export const metadata: Metadata = {
-  title: "Superteam Academy | Level Up on Solana",
-  description: "Elite Web3 Gamified Learning Experience",
-};
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-export default async function RootLayout({
-  children,
-  params: { locale }
-}: {
-  children: React.ReactNode;
-  params: { locale: string };
-}) {
-  const messages = await getMessages();
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Login Error:", error.message);
+      toast.error("Auth failed. Check console.");
+      setLoading(false);
+    }
+  };
 
   return (
-    <html lang={locale} className="dark">
-      <body className={`${syne.variable} ${mono.variable} antialiased bg-[#0a0a0a] text-white`}>
-        <NextIntlClientProvider messages={messages} locale={locale}>
-          <RootProvider>
-            {children}
-            <Toaster position="bottom-right" />
-          </RootProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={handleGoogleLogin}
+      disabled={loading}
+      className="flex items-center gap-3 px-6 py-2.5 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-neutral-200 transition-all"
+    >
+      <LogIn size={16} />
+      {loading ? 'Redirecting...' : 'Sign in with Google'}
+    </motion.button>
   );
-}
+};
 EOF
 
-echo "🗑️ Nuking build cache for fresh asset manifest..."
-rm -rf .next
-
-echo "------------------------------------------------"
-echo "✅ ASSET LOADING OPTIMIZED."
-echo "🚀 Next.js will now handle font display more efficiently."
+echo "✅ AUTH BUTTON REPAIRED."
