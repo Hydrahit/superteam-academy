@@ -1,234 +1,318 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🎬 FORGING AURA COURSE PLAYER: Injecting UI and RPC Integrations...');
+console.log('🚀 FORGING THE ULTIMATE LANDING PAGE (AURA + MULTIBLOCK)...');
 
 const rootDir = process.cwd();
 
-// Ensure directory exists
-const courseDir = path.join(rootDir, 'app/courses/[slug]');
-if (!fs.existsSync(courseDir)) fs.mkdirSync(courseDir, { recursive: true });
-
-// 1. UPDATE DICTIONARIES FOR COURSE PLAYER
+// 1. UPDATE DICTIONARIES FOR THE NEW BLUEPRINT
 const updateDictionary = (lang, newContent) => {
   const filePath = path.join(rootDir, `messages/${lang}.json`);
   let content = {};
   if (fs.existsSync(filePath)) {
     content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   }
-  content["Course"] = { ...(content["Course"] || {}), ...newContent };
+  content["Landing"] = newContent;
   fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
-  console.log(`✅ Updated ${lang}.json dictionary for Course Player`);
+  console.log(`✅ Updated ${lang}.json dictionary`);
 };
 
 updateDictionary('en', {
-  "curriculum": "Curriculum",
-  "completeLesson": "Complete & Claim 100 XP",
-  "completing": "Verifying...",
-  "successMessage": "XP Claimed Successfully! Level updated.",
-  "linkToEarn": "Link Wallet to Earn XP",
-  "nextLesson": "Next Lesson",
-  "lessonTitle": "Introduction to PDAs",
-  "lessonModule": "Module 1: Solana Core"
+  "heroTitle": "Master Web3.",
+  "heroHighlight": "Earn Your Place on the Leaderboard.",
+  "heroSub": "The ultimate gamified academy for the Solana ecosystem. Learn seamlessly, verify cryptographically.",
+  "ctaPrimary": "Start Learning",
+  "ctaSecondary": "Explore Curriculum",
+  "socialProof": "Powered by the best in Web3",
+  "bento1Title": "Hybrid Authentication",
+  "bento1Desc": "Seamlessly link Google OAuth with your Phantom Wallet.",
+  "bento2Title": "Proof of Knowledge",
+  "bento2Desc": "Cryptographic Ed25519 verification for every milestone.",
+  "bento3Title": "Real-Time Leaderboard",
+  "bento3Desc": "Compete globally. Your rank updates instantly via secure RPCs.",
+  "bento4Title": "Daily Streaks & Gamification",
+  "bento4Desc": "Maintain your streak, level up, and dominate the ecosystem.",
+  "howItWorks": "How It Works",
+  "step1Title": "Authenticate",
+  "step1Desc": "Sign in with Google to create your base profile securely.",
+  "step2Title": "Bind Wallet",
+  "step2Desc": "Connect your Solana wallet to establish your on-chain identity.",
+  "step3Title": "Learn & Climb",
+  "step3Desc": "Complete modules, earn verified XP, and top the leaderboard.",
+  "statsTitle": "The Ecosystem is Growing",
+  "stat1": "Total XP Earned",
+  "stat2": "Active Wallets Linked",
+  "stat3": "Modules Completed",
+  "finalHeadline": "Ready to join the next generation of builders?",
+  "finalCta": "Launch App",
+  "footerText": "Built with 🦾 by autonomous AI agents"
 });
 
 updateDictionary('pt', {
-  "curriculum": "Currículo",
-  "completeLesson": "Concluir e Resgatar 100 XP",
-  "completing": "Verificando...",
-  "successMessage": "XP Resgatado com Sucesso! Nível atualizado.",
-  "linkToEarn": "Vincule a Carteira para Ganhar XP",
-  "nextLesson": "Próxima Lição",
-  "lessonTitle": "Introdução aos PDAs",
-  "lessonModule": "Módulo 1: Essencial da Solana"
+  "heroTitle": "Domine a Web3.",
+  "heroHighlight": "Conquiste seu lugar no Ranking.",
+  "heroSub": "A academia gamificada definitiva para o ecossistema Solana. Aprenda de forma contínua, verifique criptograficamente.",
+  "ctaPrimary": "Comece a Aprender",
+  "ctaSecondary": "Explorar Currículo",
+  "socialProof": "Impulsionado pelos melhores da Web3",
+  "bento1Title": "Autenticação Híbrida",
+  "bento1Desc": "Vincule perfeitamente o Google OAuth à sua Phantom Wallet.",
+  "bento2Title": "Prova de Conhecimento",
+  "bento2Desc": "Verificação criptográfica Ed25519 para cada marco.",
+  "bento3Title": "Ranking em Tempo Real",
+  "bento3Desc": "Batalhe globalmente. Seu rank atualiza instantaneamente via RPCs.",
+  "bento4Title": "Ofensivas e Gamificação",
+  "bento4Desc": "Mantenha sua ofensiva, suba de nível e domine o ecossistema.",
+  "howItWorks": "Como Funciona",
+  "step1Title": "Autenticar",
+  "step1Desc": "Faça login com o Google para criar seu perfil base com segurança.",
+  "step2Title": "Vincular Carteira",
+  "step2Desc": "Conecte sua carteira Solana para estabelecer sua identidade on-chain.",
+  "step3Title": "Aprenda e Suba",
+  "step3Desc": "Conclua módulos, ganhe XP verificado e lidere o ranking.",
+  "statsTitle": "O Ecossistema está Crescendo",
+  "stat1": "XP Total Ganho",
+  "stat2": "Carteiras Ativas Vinculadas",
+  "stat3": "Módulos Concluídos",
+  "finalHeadline": "Pronto para se juntar à próxima geração de construtores?",
+  "finalCta": "Iniciar App",
+  "footerText": "Construído com 🦾 por agentes de IA autônomos"
 });
 
-// 2. GENERATE COURSE PLAYER PAGE
-const pagePath = path.join(courseDir, 'page.tsx');
-const pageCode = `'use client';
+// 2. BUILD THE PAGE
+const landingPath = path.join(rootDir, 'app/page.tsx');
+const landingCode = `'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { PlayCircle, CheckCircle2, Lock, Trophy, AlertCircle } from 'lucide-react';
+import { ArrowRight, Shield, Trophy, Flame, Wallet, Code, CheckCircle2, ChevronRight, Github, Twitter } from 'lucide-react';
 
-// Core AURA Components
-import { PlatformLayout } from '@/layouts/PlatformLayout';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Alert } from '@/components/ui/Alert';
+import { Card } from '@/components/ui/Card';
 
-// Auth & Backend Services
-import { useAuth } from '@/contexts/AuthContext';
-import { SupabaseProgressService } from '@/application/services/SupabaseProgressService';
-
-export default function CoursePlayer({ params }: { params: { slug: string } }) {
-  const { wallet, isLinked } = useAuth();
-  const [isCompleting, setIsCompleting] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Safe translation fallback
+export default function LandingPage() {
   let t;
   try {
-    t = useTranslations('Course');
+    t = useTranslations('Landing');
   } catch (e) {
     t = (key: string) => key;
   }
 
-  // Mock Curriculum Data
-  const modules = [
-    { id: 1, title: "Module 1: Solana Core", lessons: [
-      { id: 'intro-to-pdas', title: "Introduction to PDAs", duration: "12 min", status: 'active' },
-      { id: 'cpi-basics', title: "Cross-Program Invocations", duration: "18 min", status: 'locked' }
-    ]},
-    { id: 2, title: "Module 2: Advanced Anchor", lessons: [
-      { id: 'anchor-state', title: "State Management", duration: "25 min", status: 'locked' }
-    ]}
-  ];
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+  };
 
-  const handleCompleteLesson = async () => {
-    if (!isLinked || !wallet) {
-      setError("Please link your wallet in the dashboard to earn XP.");
-      return;
-    }
-
-    setIsCompleting(true);
-    setError(null);
-
-    try {
-      // 🚀 The Zero-Trust RPC Call
-      // We pass the wallet address and the lesson ID (params.slug)
-      const result = await SupabaseProgressService.completeLesson(
-        wallet.toBase58(), 
-        params.slug || 'intro-to-pdas'
-      );
-
-      if (result.success) {
-        setCompleted(true);
-      } else {
-        setError(result.error || "Failed to verify lesson completion.");
-      }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
-    } finally {
-      setIsCompleting(false);
-    }
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
   return (
-    <PlatformLayout>
-      <div className="flex flex-col lg:flex-row min-h-screen">
-        
-        {/* Main Content Area */}
-        <div className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto pb-32 lg:pb-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
-            
-            {/* Header */}
-            <div className="mb-8">
-              <Badge variant="outline" className="mb-4">{t('lessonModule')}</Badge>
-              <h1 className="text-3xl md:text-5xl font-['Syne'] font-bold text-white mb-4">
-                {t('lessonTitle')}
-              </h1>
-            </div>
+    <div className="min-h-screen bg-canvas text-primary font-['Bricolage_Grotesque'] overflow-hidden selection:bg-accent selection:text-white">
+      
+      {/* Dynamic Background Glows */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-[#00E5FF]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[-10%] w-[500px] h-[500px] bg-[#00FF94]/10 rounded-full blur-[120px] pointer-events-none" />
 
-            {/* Video Player Placeholder */}
-            <Card noPadding className="aspect-video bg-black/40 border-border/50 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer mb-section">
-              <div className="absolute inset-0 bg-accent/5 group-hover:bg-accent/10 transition-colors" />
-              <PlayCircle className="w-20 h-20 text-accent opacity-80 group-hover:scale-110 transition-transform" />
-              <p className="mt-4 text-secondary font-['JetBrains_Mono'] text-sm tracking-widest uppercase">Play Lesson</p>
-            </Card>
-
-            {/* Lesson Content (Markdown Placeholder) */}
-            <div className="prose prose-invert prose-lg max-w-none text-secondary/80 font-light mb-section">
-              <p>Program Derived Addresses (PDAs) are one of the most important concepts in Solana development. They allow programs to control accounts without needing a private key...</p>
-              <h3>Why do we need PDAs?</h3>
-              <ul>
-                <li>Deterministic account derivation</li>
-                <li>Cross-Program Invocation (CPI) signing</li>
-                <li>Hashmap-like data structures on-chain</li>
-              </ul>
-            </div>
-
-            {/* Action Bar / Completion Logic */}
-            <div className="pt-8 border-t border-white/5 flex flex-col items-start gap-4">
-              <AnimatePresence mode="wait">
-                {error && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                    <Alert type="error" title="Verification Failed">{error}</Alert>
-                  </motion.div>
-                )}
-                
-                {completed ? (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full">
-                    <Alert type="success" title={t('successMessage')}>
-                      <div className="flex items-center gap-4 mt-4">
-                        <Button variant="secondary" className="gap-2">
-                          {t('nextLesson')} <PlayCircle className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </Alert>
-                  </motion.div>
-                ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
-                    <Button 
-                      onClick={handleCompleteLesson} 
-                      isLoading={isCompleting}
-                      disabled={!isLinked}
-                      className="w-full md:w-auto gap-2"
-                    >
-                      {!isLinked ? <Lock className="w-4 h-4" /> : <Trophy className="w-4 h-4" />}
-                      {!isLinked ? t('linkToEarn') : t('completeLesson')}
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
+      {/* 1. HERO SECTION */}
+      <section className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-32 pb-20 min-h-[85vh]">
+        <motion.div initial="hidden" animate="show" variants={staggerContainer} className="max-w-5xl mx-auto flex flex-col items-center">
+          <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border mb-8 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-[#00FF94] animate-pulse" />
+            <span className="text-xs font-['JetBrains_Mono'] tracking-widest uppercase text-secondary">Superteam Academy v2.0</span>
           </motion.div>
-        </div>
-
-        {/* Right Sidebar: Curriculum */}
-        <div className="w-full lg:w-80 border-l border-white/5 bg-canvas/30 p-6 hidden lg:block overflow-y-auto">
-          <h3 className="font-['Syne'] font-bold text-lg mb-6">{t('curriculum')}</h3>
           
-          <div className="space-y-8">
-            {modules.map((mod) => (
-              <div key={mod.id}>
-                <h4 className="text-sm font-semibold text-secondary mb-4 uppercase tracking-wider">{mod.title}</h4>
-                <div className="space-y-2">
-                  {mod.lessons.map((lesson) => (
-                    <div 
-                      key={lesson.id} 
-                      className={\`flex items-center justify-between p-3 radius-continuous border \${
-                        lesson.status === 'active' 
-                          ? 'bg-accent/10 border-accent/20 text-primary' 
-                          : 'bg-transparent border-transparent text-secondary hover:bg-white/5'
-                      } cursor-pointer transition-colors\`}
-                    >
-                      <div className="flex items-center gap-3 truncate">
-                        {lesson.status === 'active' ? (
-                          <PlayCircle className="w-4 h-4 text-accent shrink-0" />
-                        ) : (
-                          <Lock className="w-4 h-4 opacity-50 shrink-0" />
-                        )}
-                        <span className="text-sm truncate">{lesson.title}</span>
-                      </div>
-                      <span className="text-[10px] font-['JetBrains_Mono'] opacity-50">{lesson.duration}</span>
-                    </div>
-                  ))}
+          <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-['Syne'] font-extrabold tracking-tight leading-[1.05] mb-6">
+            {t('heroTitle')} <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#00FF94]">
+              {t('heroHighlight')}
+            </span>
+          </motion.h1>
+          
+          <motion.p variants={fadeInUp} className="text-lg md:text-xl text-secondary max-w-2xl mb-10 font-light leading-relaxed">
+            {t('heroSub')}
+          </motion.p>
+
+          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <Link href="/dashboard">
+              <Button className="w-full sm:w-auto h-14 px-8 text-lg rounded-full gap-2 shadow-lg shadow-accent/20">
+                {t('ctaPrimary')} <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/courses">
+              <Button variant="secondary" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full gap-2 bg-surface/50 backdrop-blur-md">
+                {t('ctaSecondary')}
+              </Button>
+            </Link>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* 2. SOCIAL PROOF */}
+      <section className="relative z-10 py-10 border-y border-border/50 bg-surface/30 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-sm font-['JetBrains_Mono'] uppercase tracking-widest text-secondary mb-6">{t('socialProof')}</p>
+          <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-50 grayscale">
+            <div className="font-['Syne'] font-bold text-xl flex items-center gap-2"><Code className="w-6 h-6"/> Solana</div>
+            <div className="font-['Syne'] font-bold text-xl flex items-center gap-2"><Shield className="w-6 h-6"/> Supabase</div>
+            <div className="font-['Syne'] font-bold text-xl flex items-center gap-2"><Zap className="w-6 h-6"/> Vercel</div>
+            <div className="font-['Syne'] font-bold text-xl flex items-center gap-2"><LayoutTemplate className="w-6 h-6"/> Next.js</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. BENTO BOX FEATURE GRID */}
+      <section className="relative z-10 py-32 px-4 max-w-7xl mx-auto">
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[250px]">
+          
+          {/* Block 1: Hybrid Auth (Wide) */}
+          <motion.div variants={fadeInUp} className="md:col-span-2">
+            <Card className="h-full flex flex-col justify-end relative overflow-hidden group bg-gradient-to-br from-surface to-canvas">
+              <div className="absolute top-6 right-6 flex items-center gap-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"><UserIcon className="w-6 h-6" /></div>
+                <div className="w-12 h-4 border-t-2 border-dashed border-border" />
+                <div className="w-12 h-12 rounded-full bg-[#AB9FF2]/20 text-[#AB9FF2] flex items-center justify-center"><Wallet className="w-6 h-6" /></div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-['Syne'] font-bold mb-2">{t('bento1Title')}</h3>
+                <p className="text-secondary">{t('bento1Desc')}</p>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Block 2: Cryptographic Verification */}
+          <motion.div variants={fadeInUp}>
+            <Card className="h-full flex flex-col justify-between group">
+              <Shield className="w-10 h-10 text-accent group-hover:scale-110 transition-transform" />
+              <div>
+                <h3 className="text-xl font-['Syne'] font-bold mb-2">{t('bento2Title')}</h3>
+                <p className="text-secondary text-sm">{t('bento2Desc')}</p>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Block 3: Leaderboard */}
+          <motion.div variants={fadeInUp}>
+            <Card className="h-full flex flex-col justify-between group border-accent/20">
+              <Trophy className="w-10 h-10 text-[#FFD700] group-hover:scale-110 transition-transform" />
+              <div>
+                <h3 className="text-xl font-['Syne'] font-bold mb-2">{t('bento3Title')}</h3>
+                <p className="text-secondary text-sm">{t('bento3Desc')}</p>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Block 4: Gamification (Wide) */}
+          <motion.div variants={fadeInUp} className="md:col-span-2">
+            <Card className="h-full flex flex-col justify-between relative overflow-hidden bg-surface">
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-10">
+                <Flame className="w-64 h-64 text-[#FF9500]" />
+              </div>
+              <div className="relative z-10 mt-auto">
+                <div className="w-full bg-canvas rounded-full h-3 mb-6 border border-border overflow-hidden">
+                  <motion.div initial={{ width: 0 }} whileInView={{ width: '70%' }} viewport={{ once: true }} transition={{ duration: 1.5, delay: 0.5 }} className="bg-gradient-to-r from-accent to-[#00E5FF] h-full rounded-full" />
                 </div>
+                <h3 className="text-2xl font-['Syne'] font-bold mb-2">{t('bento4Title')}</h3>
+                <p className="text-secondary">{t('bento4Desc')}</p>
+              </div>
+            </Card>
+          </motion.div>
+
+        </motion.div>
+      </section>
+
+      {/* 4. HOW IT WORKS */}
+      <section className="relative z-10 py-24 bg-surface/30 border-y border-border/50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-['Syne'] font-bold">{t('howItWorks')}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { step: "01", title: t('step1Title'), desc: t('step1Desc'), icon: UserIcon },
+              { step: "02", title: t('step2Title'), desc: t('step2Desc'), icon: Wallet },
+              { step: "03", title: t('step3Title'), desc: t('step3Desc'), icon: Trophy }
+            ].map((s, i) => (
+              <div key={i} className="flex flex-col items-center text-center p-6 relative group">
+                {i !== 2 && <ChevronRight className="hidden md:block absolute -right-6 top-1/3 text-border w-8 h-8" />}
+                <div className="w-16 h-16 rounded-2xl bg-canvas border border-border flex items-center justify-center mb-6 group-hover:border-accent transition-colors shadow-sm">
+                  <s.icon className="w-8 h-8 text-primary" />
+                </div>
+                <Badge variant="outline" className="mb-4">STEP {s.step}</Badge>
+                <h3 className="text-xl font-bold font-['Syne'] mb-2">{s.title}</h3>
+                <p className="text-secondary">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-      </div>
-    </PlatformLayout>
+      {/* 5. LIVE STATS */}
+      <section className="relative z-10 py-32 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl font-['Syne'] font-bold mb-16">{t('statsTitle')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center">
+              <span className="text-5xl md:text-6xl font-['JetBrains_Mono'] font-bold text-accent mb-2">1.2M+</span>
+              <span className="text-secondary font-medium tracking-wide">{t('stat1')}</span>
+            </div>
+            <div className="flex flex-col items-center border-y md:border-y-0 md:border-x border-border/50 py-8 md:py-0">
+              <span className="text-5xl md:text-6xl font-['JetBrains_Mono'] font-bold text-[#00E5FF] mb-2">15k+</span>
+              <span className="text-secondary font-medium tracking-wide">{t('stat2')}</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-5xl md:text-6xl font-['JetBrains_Mono'] font-bold text-[#AB9FF2] mb-2">84k+</span>
+              <span className="text-secondary font-medium tracking-wide">{t('stat3')}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. FINAL CTA */}
+      <section className="relative z-10 py-32 text-center px-4 bg-gradient-to-b from-transparent to-accent/5">
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeInUp} className="max-w-3xl mx-auto">
+          <h2 className="text-5xl md:text-6xl font-['Syne'] font-extrabold mb-8 leading-tight">
+            {t('finalHeadline')}
+          </h2>
+          <Link href="/dashboard">
+            <Button className="h-16 px-10 text-xl rounded-full gap-3 shadow-2xl shadow-accent/20 hover:scale-105">
+              {t('finalCta')} <ArrowRight className="w-6 h-6" />
+            </Button>
+          </Link>
+        </motion.div>
+      </section>
+
+      {/* 7. MINIMALIST FOOTER */}
+      <footer className="relative z-10 border-t border-border/50 py-12 px-8 bg-surface/50">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="font-['Syne'] font-bold tracking-tighter text-xl text-primary">SUPERTEAM</div>
+          
+          <div className="flex gap-8 text-sm font-medium text-secondary">
+            <Link href="#" className="hover:text-primary transition-colors">Terms</Link>
+            <Link href="#" className="hover:text-primary transition-colors">Privacy</Link>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <p className="text-sm text-secondary hidden md:block">{t('footerText')}</p>
+            <a href="#" className="text-secondary hover:text-primary transition-colors"><Github className="w-5 h-5" /></a>
+            <a href="#" className="text-secondary hover:text-primary transition-colors"><Twitter className="w-5 h-5" /></a>
+          </div>
+        </div>
+        <p className="text-sm text-secondary text-center mt-8 block md:hidden">{t('footerText')}</p>
+      </footer>
+
+    </div>
   );
 }
-`;
-fs.writeFileSync(pagePath, pageCode);
 
-console.log('✅ PREMIUM COURSE PLAYER DEPLOYED.');
+// Minimal Icons for UI
+function UserIcon(props: any) { return <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>; }
+function Zap(props: any) { return <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>; }
+function LayoutTemplate(props: any) { return <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><rect x="3" y="8" width="18" height="1" /><rect x="8" y="8" width="1" height="13" /></svg>; }
+`;
+fs.writeFileSync(landingPath, landingCode);
+
+console.log('✅ THE ULTIMATE LANDING PAGE HAS BEEN DEPLOYED.');
