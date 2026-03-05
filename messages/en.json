@@ -12,7 +12,14 @@
   "Course": {
     "resume": "Resume Lesson",
     "complete": "Complete Lesson",
-    "curriculum": "Curriculum"
+    "curriculum": "Curriculum",
+    "completeLesson": "Complete & Claim 100 XP",
+    "completing": "Verifying...",
+    "successMessage": "XP Claimed Successfully! Level updated.",
+    "linkToEarn": "Link Wallet to Earn XP",
+    "nextLesson": "Next Lesson",
+    "lessonTitle": "Introduction to PDAs",
+    "lessonModule": "Module 1: Solana Core"
   },
   "Landing": {
     "heroTitle": "Master Solana.",

@@ -12,7 +12,14 @@
   "Course": {
     "resume": "Retomar Lição",
     "complete": "Concluir Lição",
-    "curriculum": "Currículo"
+    "curriculum": "Currículo",
+    "completeLesson": "Concluir e Resgatar 100 XP",
+    "completing": "Verificando...",
+    "successMessage": "XP Resgatado com Sucesso! Nível atualizado.",
+    "linkToEarn": "Vincule a Carteira para Ganhar XP",
+    "nextLesson": "Próxima Lição",
+    "lessonTitle": "Introdução aos PDAs",
+    "lessonModule": "Módulo 1: Essencial da Solana"
   },
   "Landing": {
     "heroTitle": "Domine a Solana.",

@@ -2,5 +2,18 @@
   "Auth": {
     "verify": "Verificar Assinatura da Carteira",
     "error": "Assinatura Inválida"
+  },
+  "Dashboard": {
+    "greeting": "Bem-vindo de volta",
+    "totalXp": "XP Total",
+    "globalRank": "Ranking Global",
+    "streak": "Ofensiva Atual",
+    "walletLinked": "Carteira Verificada",
+    "linkWalletCta": "Vincule a Carteira para sincronizar dados",
+    "continueLearning": "Continue Aprendendo",
+    "resumePath": "Retome sua jornada na Solana de onde parou.",
+    "recentActivity": "Atividade Recente",
+    "noActivity": "Nenhuma atividade recente. Inicie um curso para ganhar XP!",
+    "courseName": "Conceitos Essenciais da Solana"
   }
 }
