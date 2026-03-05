@@ -1,51 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer base {
-  :root {
-    /* AURA Light Mode Tokens */
-    --canvas: #F8F7F4;
-    --surface: #FFFFFF;
-    --primary-text: #1A1C23;
-    --secondary-text: #6B6D76;
-    --accent: #8B9D8E;
-    --accent-hover: #7A8A7C;
-    --border: #D8D1C5;
-    
-    /* Semantic */
-    --success: #34C759;
-    --warning: #FF9500;
-    --error: #FF3B30;
-    --info: #007AFF;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      /* AURA Dark Mode Tokens (Inverted for OLED efficiency) */
-      --canvas: #000000;
-      --surface: #1C1C1E;
-      --primary-text: #F2F2F7;
-      --secondary-text: #8E8E93;
-      --accent: #A1B5A4;
-      --accent-hover: #8B9D8E;
-      --border: #38383A;
-    }
-  }
-
-  body {
-    background-color: var(--canvas);
-    color: var(--primary-text);
-    /* SF Pro Font Stack */
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-}
-
-@layer utilities {
-  .radius-continuous {
-    border-radius: 14px;
-    /* Webkit specific squircle for HIG accuracy */
-    -webkit-border-radius: 14px;
-  }
-}
+:root { --background: #060608; --foreground: #ffffff; }
+body { background-color: var(--background); color: var(--foreground); font-family: 'Bricolage Grotesque', sans-serif; }
+.glitch-text { text-shadow: 2px 0 #14F195, -2px 0 #9945FF; }
