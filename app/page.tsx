@@ -1,33 +1,34 @@
-'use client';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { Navbar } from '@/src/components/layout/Navbar';
+import { FeaturedHero } from '@/src/components/ui/FeaturedHero';
+import { HorizontalRow } from '@/src/components/ui/HorizontalRow';
+import { BentoStats } from '@/src/components/ui/BentoStats';
 
-export default function EliteLanding() {
+const MOCK_TRENDING = [
+  { id: '1', title: 'Solana 101: The Kernel', difficulty: 'Beginner', xp: 100, duration: '2 Hrs' },
+  { id: '2', title: 'Token Program Deep Dive', difficulty: 'Intermediate', xp: 300, duration: '4 Hrs' },
+  { id: '3', title: 'Building a DEX UI', difficulty: 'Intermediate', xp: 250, duration: '3 Hrs' },
+  { id: '4', title: 'Intro to Cryptography', difficulty: 'Beginner', xp: 150, duration: '1.5 Hrs' },
+  { id: '5', title: 'NFT Minting Engine', difficulty: 'Intermediate', xp: 400, duration: '5 Hrs' },
+];
+
+const MOCK_PRO = [
+  { id: '6', title: 'Anchor Framework Mastery', difficulty: 'Pro', xp: 800, duration: '8 Hrs' },
+  { id: '7', title: 'Advanced SVM Internals', difficulty: 'Pro', xp: 1200, duration: '10 Hrs' },
+  { id: '8', title: 'Security & Auditing', difficulty: 'Pro', xp: 1000, duration: '6 Hrs' },
+  { id: '9', title: 'Cross-Program Invocations', difficulty: 'Pro', xp: 600, duration: '4 Hrs' },
+];
+
+export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
-        <span className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono tracking-widest uppercase">
-          V2.0 is Live • Solana Global
-        </span>
-        <h1 className="text-7xl md:text-9xl font-syne font-black tracking-tighter leading-none">
-          LEVEL <span className="text-cyan-500 italic">UP.</span>
-        </h1>
-        <p className="max-w-2xl mx-auto text-neutral-400 font-mono text-sm md:text-base">
-          Master the blockchain with soulbound rewards, real-time analytics, and an elite developer community.
-        </p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center pt-8">
-          <Link href="/dashboard" className="px-12 py-4 bg-white text-black font-syne font-bold rounded-full hover:bg-cyan-400 transition-all duration-500 hover:shadow-[0_0_40px_rgba(0,229,255,0.4)]">
-            ENTER_CONSOLE
-          </Link>
-          <Link href="/leaderboard" className="px-12 py-4 glass text-white font-syne font-bold rounded-full hover:bg-white/5 transition-all">
-            VIEW_RANKINGS
-          </Link>
-        </div>
-      </motion.div>
-    </div>
+    <main className="min-h-screen bg-[#060608] selection:bg-[#14F195]/30">
+      <Navbar />
+      <FeaturedHero />
+      
+      <div className="relative z-20 -mt-10 bg-gradient-to-b from-transparent via-[#060608] to-[#060608]">
+        <HorizontalRow title="Trending_Now" courses={MOCK_TRENDING} />
+        <BentoStats />
+        <HorizontalRow title="Pro_Architect_Path" courses={MOCK_PRO} />
+      </div>
+    </main>
   );
 }
