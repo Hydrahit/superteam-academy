@@ -1,12 +1,1 @@
-{
-  "Header": {
-    "courses": "Courses",
-    "leaderboard": "Leaderboard"
-  },
-  "Dashboard": {
-    "title": "Builder Dashboard",
-    "xp": "Total XP",
-    "level": "Level",
-    "streak": "Streak"
-  }
-}
+{ "Index": { "hero_title": "MASTER THE SOLANA ENGINE", "hero_sub": "The definitive path from zero to elite builder.", "start_btn": "START COURSE" } }

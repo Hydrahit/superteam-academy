@@ -1,11 +1,17 @@
+import createMiddleware from 'next-intl/middleware';
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
-export function middleware(request: NextRequest) {
-  return NextResponse.next();
-}
+export default createMiddleware({
+  // A list of all locales that are supported
+  locales: ['en', 'es', 'pt'],
+  
+  // Used when no locale matches
+  defaultLocale: 'en',
+  
+  // Always prefix the locale in the URL (e.g., /en/courses)
+  localePrefix: 'always'
+});
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // Match only internationalized pathnames
+  matcher: ['/', '/(en|es|pt)/:path*', '/((?!api|_next|_vercel|.*\\..*).*)']
 };
