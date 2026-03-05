@@ -1,73 +1,57 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🛡️  Initiating 404 Path Correction...');
+console.log('🔧 Aligning Project Paths & Aliases...');
 
 const rootDir = process.cwd();
 
-// 1. Ensure Standard App Structure (Removing confusing groups for now)
-const essentialDirs = [
-  'app/dashboard',
-  'app/courses/[slug]/[id]',
-  'app/leaderboard',
-  'app/profile'
-];
+// 1. Force fix tsconfig.json to recognize @/ as src/
+const tsConfigPath = path.join(rootDir, 'tsconfig.json');
+if (fs.existsSync(tsConfigPath)) {
+    let tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
+    tsConfig.compilerOptions.baseUrl = ".";
+    tsConfig.compilerOptions.paths = {
+        "@/*": ["./src/*"]
+    };
+    fs.writeFileSync(tsConfigPath, JSON.stringify(tsConfig, null, 2), 'utf8');
+    console.log('✅ tsconfig.json: Path aliases updated.');
+}
 
-essentialDirs.forEach(dir => {
-  const fullPath = path.join(rootDir, dir);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
-    console.log(`✅ Created path: ${dir}`);
-  }
-});
+// 2. Ensure PlatformLayout exists in the EXACT expected location
+const layoutDir = path.join(rootDir, 'src/presentation/layouts');
+if (!fs.existsSync(layoutDir)) fs.mkdirSync(layoutDir, { recursive: true });
 
-// 2. Fix Dashboard Page (The most common 404)
-const dashboardPath = path.join(rootDir, 'app/dashboard/page.tsx');
-const dashboardCode = `'use client';
-import { PlatformLayout } from '@/presentation/layouts/PlatformLayout';
-import { useAuth } from '@/contexts/AuthContext';
+const layoutFile = path.join(layoutDir, 'PlatformLayout.tsx');
+const layoutContent = `
+'use client';
+import React from 'react';
+import { AppSidebar } from '@/presentation/components/AppSidebar';
 
-export default function Dashboard() {
-  const { user, authStage } = useAuth();
-  
+export const PlatformLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <PlatformLayout>
-      <div className="p-8">
-        <h1 className="text-4xl font-bold font-['Syne'] text-white">Dashboard</h1>
-        <p className="text-white/50 mt-2">Welcome back, {user?.email || 'Scholar'}</p>
-        <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-3xl">
-          <p className="text-sm font-['JetBrains_Mono'] text-[#00FF94]">Status: {authStage}</p>
-        </div>
+    <div className="flex bg-[#060608] min-h-screen">
+      <AppSidebar />
+      <div className="flex-1 md:ml-64 relative">
+        {/* Glow Effects for World Class UI */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#00FF94]/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="relative z-10">{children}</div>
       </div>
-    </PlatformLayout>
+    </div>
   );
-}
-`;
-fs.writeFileSync(dashboardPath, dashboardCode);
-
-// 3. Clean Middleware (Stop aggressive redirects causing 404 loops)
-const middlewarePath = path.join(rootDir, 'middleware.ts');
-const middlewareCode = `
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
-export function middleware(request: NextRequest) {
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
 `;
-fs.writeFileSync(middlewarePath, middlewareCode);
+fs.writeFileSync(layoutFile, layoutContent);
 
-// 4. Update Sidebar Links (Absolute Paths)
-const sidebarPath = path.join(rootDir, 'src/presentation/components/AppSidebar.tsx');
-if (fs.existsSync(sidebarPath)) {
-  let content = fs.readFileSync(sidebarPath, 'utf8');
-  content = content.replace(/href="dashboard"/g, 'href="/dashboard"');
-  content = content.replace(/href="courses"/g, 'href="/courses"');
-  fs.writeFileSync(sidebarPath, content);
+// 3. Fix the Sidebar path as well
+const sidebarDir = path.join(rootDir, 'src/presentation/components');
+if (!fs.existsSync(sidebarDir)) fs.mkdirSync(sidebarDir, { recursive: true });
+
+// Move AppSidebar if it's in the old location
+const oldSidebar = path.join(rootDir, 'components/layout/AppSidebar.tsx');
+const newSidebar = path.join(sidebarDir, 'AppSidebar.tsx');
+if (fs.existsSync(oldSidebar) && !fs.existsSync(newSidebar)) {
+    fs.renameSync(oldSidebar, newSidebar);
+    console.log('🚚 Moved AppSidebar to src/presentation/components/');
 }
 
-console.log('🎉 Paths Resynced! Standard routing restored.');
+console.log('🎉 Imports Aligned! Run "npm run build" now.');
