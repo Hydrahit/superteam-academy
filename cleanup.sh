@@ -1,74 +1,64 @@
 #!/bin/bash
 
-echo "🛠️  REPAIRING MIDDLEWARE AND i18n CONFIG..."
+echo "⚡ OPTIMIZING ASSET PRELOADING..."
 
-# 1. Fix Middleware (Using the correct createMiddlewareClient)
-echo "✍️ Updating middleware.ts..."
-cat << 'EOF' > middleware.ts
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import createIntlMiddleware from 'next-intl/middleware';
+# Update the layout with optimized font loading
+cat << 'EOF' > app/\[locale\]/layout.tsx
+import type { Metadata } from "next";
+import { Syne, JetBrains_Mono } from "next/font/google";
+import "@/app/globals.css";
+import { RootProvider } from "@/components/providers/root-provider";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
+import { Toaster } from 'react-hot-toast';
 
-const locales = ['en', 'es', 'pt'];
-const publicPages = ['/', '/auth/callback', '/courses'];
-
-const intlMiddleware = createIntlMiddleware({
-  locales,
-  defaultLocale: 'en'
+// Optimize: Set preload to true but ensure display is 'swap'
+const syne = Syne({ 
+  subsets: ["latin"], 
+  variable: "--font-syne",
+  display: 'swap',
+  preload: true 
 });
 
-export default async function middleware(req: NextRequest) {
-  // A. Handle Localization
-  const response = intlMiddleware(req);
+const mono = JetBrains_Mono({ 
+  subsets: ["latin"], 
+  variable: "--font-mono",
+  display: 'swap',
+  preload: true 
+});
 
-  try {
-    // B. Fix: Use createMiddlewareClient (The correct function for Auth Helpers)
-    const supabase = createMiddlewareClient({ req, res: response });
-    
-    // Refresh session to keep the user logged in
-    const { data: { session } } = await supabase.auth.getSession();
-
-    const { pathname } = req.nextUrl;
-    const pathWithoutLocale = pathname.replace(/^\/(en|es|pt)/, '') || '/';
-    const isPublicPage = publicPages.includes(pathWithoutLocale);
-
-    // C. Auth Guard
-    if (!session && !isPublicPage) {
-      const locale = pathname.split('/')[1] || 'en';
-      return NextResponse.redirect(new URL(`/${locale}`, req.url));
-    }
-  } catch (e) {
-    console.error("Middleware Auth Error:", e);
-  }
-
-  return response;
-}
-
-export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)']
+export const metadata: Metadata = {
+  title: "Superteam Academy | Level Up on Solana",
+  description: "Elite Web3 Gamified Learning Experience",
 };
+
+export default async function RootLayout({
+  children,
+  params: { locale }
+}: {
+  children: React.ReactNode;
+  params: { locale: string };
+}) {
+  const messages = await getMessages();
+
+  return (
+    <html lang={locale} className="dark">
+      <body className={`${syne.variable} ${mono.variable} antialiased bg-[#0a0a0a] text-white`}>
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          <RootProvider>
+            {children}
+            <Toaster position="bottom-right" />
+          </RootProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}
 EOF
 
-# 2. Fix i18n Config (Returning the required locale object)
-echo "✍️ Updating i18n.ts..."
-cat << 'EOF' > i18n.ts
-import { getRequestConfig } from 'next-intl/server';
-import { notFound } from 'next/navigation';
-
-const locales = ['en', 'es', 'pt'];
-
-export default getRequestConfig(async ({ requestLocale }) => {
-  const locale = await requestLocale;
-  if (!locales.includes(locale as any)) notFound();
-
-  return {
-    locale, // This line fixes the 'none was returned' error in your logs
-    messages: (await import(`./messages/${locale}.json`)).default
-  };
-});
-EOF
+echo "🗑️ Nuking build cache for fresh asset manifest..."
+rm -rf .next
 
 echo "------------------------------------------------"
-echo "✅ CRITICAL ERRORS REPAIRED."
-echo "🚀 Now push these changes to GitHub to trigger a fresh Vercel build."
+echo "✅ ASSET LOADING OPTIMIZED."
+echo "🚀 Next.js will now handle font display more efficiently."
