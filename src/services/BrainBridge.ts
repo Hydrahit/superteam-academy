@@ -1,20 +1,3 @@
-const fs = require('fs');
-const path = require('path');
-
-console.log('🌉 BUILDING THE BRAIN BRIDGE: Linking Logic to SQL Fortress...');
-
-const rootDir = process.cwd();
-
-const createFile = (p, content) => {
-  const fullPath = path.join(rootDir, p);
-  const dir = path.dirname(fullPath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(fullPath, content.trim());
-  console.log(`✅ Bridge Synthesized: ${p}`);
-};
-
-// 1. BrainBridge Service Logic
-createFile('src/services/BrainBridge.ts', `
 import { supabase } from '@/src/infrastructure/supabase/client';
 import { AuthOrchestrator } from './AuthOrchestrator';
 
@@ -62,6 +45,3 @@ export class BrainBridge {
     };
   }
 }
-`);
-
-console.log('🚀 BRAIN BRIDGE IS LIVE. All core logic is now server-authoritative.');
