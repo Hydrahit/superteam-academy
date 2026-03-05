@@ -1,0 +1,6 @@
+{
+  "Auth": {
+    "verify": "Verificar Assinatura da Carteira",
+    "error": "Assinatura Inválida"
+  }
+}

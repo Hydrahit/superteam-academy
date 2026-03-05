@@ -1,11 +1,11 @@
 
-import createMiddleware from 'next-intl/middleware';
- 
-export default createMiddleware({
-  locales: ['en', 'pt'],
-  defaultLocale: 'en'
-});
- 
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: ['/', '/(pt|en)/:path*']
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

@@ -1,66 +1,73 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🌐 Injecting Language Switcher & Navigation Hooks...');
+console.log('🛡️  Initiating 404 Path Correction...');
 
 const rootDir = process.cwd();
 
-// 1. Create Navigation wrapper for next-intl
-const navConfig = `
-import {createSharedPathnamesNavigation} from 'next-intl/navigation';
- 
-export const locales = ['en', 'pt'] as const;
-export const {Link, redirect, usePathname, useRouter} = createSharedPathnamesNavigation({locales});
-`;
-const libDir = path.join(rootDir, 'src/lib');
-if (!fs.existsSync(libDir)) fs.mkdirSync(libDir, { recursive: true });
-fs.writeFileSync(path.join(libDir, 'navigation.ts'), navConfig);
+// 1. Ensure Standard App Structure (Removing confusing groups for now)
+const essentialDirs = [
+  'app/dashboard',
+  'app/courses/[slug]/[id]',
+  'app/leaderboard',
+  'app/profile'
+];
 
-// 2. Create the Language Switcher Component
-const switcherDir = path.join(rootDir, 'src/presentation/components');
-if (!fs.existsSync(switcherDir)) fs.mkdirSync(switcherDir, { recursive: true });
+essentialDirs.forEach(dir => {
+  const fullPath = path.join(rootDir, dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+    console.log(`✅ Created path: ${dir}`);
+  }
+});
 
-const switcherComponent = `
-'use client';
+// 2. Fix Dashboard Page (The most common 404)
+const dashboardPath = path.join(rootDir, 'app/dashboard/page.tsx');
+const dashboardCode = `'use client';
+import { PlatformLayout } from '@/presentation/layouts/PlatformLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
-import { useLocale } from 'next-intl';
-import { useRouter, usePathname } from '@/lib/navigation';
-import { Languages } from 'lucide-react';
-
-export function LanguageSwitcher() {
-  const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const toggleLocale = () => {
-    const nextLocale = locale === 'en' ? 'pt' : 'en';
-    router.replace(pathname, { locale: nextLocale });
-  };
-
+export default function Dashboard() {
+  const { user, authStage } = useAuth();
+  
   return (
-    <button 
-      onClick={toggleLocale}
-      className="flex items-center gap-3 px-4 py-3 w-full text-white/40 hover:text-[#00FF94] hover:bg-white/5 rounded-xl transition-all font-['JetBrains_Mono'] text-xs"
-    >
-      <Languages className="w-5 h-5" />
-      <span className="md:inline hidden uppercase tracking-widest">
-        {locale === 'en' ? 'English' : 'Português'}
-      </span>
-    </button>
+    <PlatformLayout>
+      <div className="p-8">
+        <h1 className="text-4xl font-bold font-['Syne'] text-white">Dashboard</h1>
+        <p className="text-white/50 mt-2">Welcome back, {user?.email || 'Scholar'}</p>
+        <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-3xl">
+          <p className="text-sm font-['JetBrains_Mono'] text-[#00FF94]">Status: {authStage}</p>
+        </div>
+      </div>
+    </PlatformLayout>
   );
 }
 `;
-fs.writeFileSync(path.join(switcherDir, 'LanguageSwitcher.tsx'), switcherComponent);
+fs.writeFileSync(dashboardPath, dashboardCode);
 
-// 3. Inject into Sidebar
-const sidebarPath = path.join(rootDir, 'components/layout/AppSidebar.tsx');
-if (fs.existsSync(sidebarPath)) {
-    let content = fs.readFileSync(sidebarPath, 'utf8');
-    if (!content.includes('LanguageSwitcher')) {
-        content = "import { LanguageSwitcher } from '@/presentation/components/LanguageSwitcher';\\n" + content;
-        content = content.replace('{/* Settings Link */}', '<LanguageSwitcher />\\n            {/* Settings Link */}');
-        fs.writeFileSync(sidebarPath, content);
-    }
+// 3. Clean Middleware (Stop aggressive redirects causing 404 loops)
+const middlewarePath = path.join(rootDir, 'middleware.ts');
+const middlewareCode = `
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  return NextResponse.next();
 }
 
-console.log('\\n✅ SWITCHER READY. Users can now toggle between EN and PT.');
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};
+`;
+fs.writeFileSync(middlewarePath, middlewareCode);
+
+// 4. Update Sidebar Links (Absolute Paths)
+const sidebarPath = path.join(rootDir, 'src/presentation/components/AppSidebar.tsx');
+if (fs.existsSync(sidebarPath)) {
+  let content = fs.readFileSync(sidebarPath, 'utf8');
+  content = content.replace(/href="dashboard"/g, 'href="/dashboard"');
+  content = content.replace(/href="courses"/g, 'href="/courses"');
+  fs.writeFileSync(sidebarPath, content);
+}
+
+console.log('🎉 Paths Resynced! Standard routing restored.');
