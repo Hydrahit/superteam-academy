@@ -4,18 +4,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { LogIn } from 'lucide-react';
-import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 
 export const AuthButton = () => {
   const [loading, setLoading] = useState(false);
+  const supabase = createClient();
 
   const handleGoogleLogin = async () => {
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) {
-      toast.error("Auth System not ready.");
-      return;
-    }
-
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({

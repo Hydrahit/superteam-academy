@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, LogOut, ChevronLeft, Link as LinkIcon, ShieldCheck } from 'lucide-react';
+import { Wallet, LogOut, ChevronLeft, Link as LinkIcon } from 'lucide-react';
 import { useRouter } from '@/lib/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
@@ -35,10 +35,11 @@ export const Navbar = () => {
           <ChevronLeft size={28} />
         </motion.button>
         
+        {/* FIX: Removed the rogue 'Wall' typo from here */}
         <div 
           onClick={() => router.push('/')}
           className="flex flex-col cursor-pointer group"
-         Wall>
+        >
           <span className="text-xl font-syne font-black text-white italic tracking-tighter leading-none">
             SUPERTEAM<span className="text-[#14F195]">ACADEMY</span>
           </span>
@@ -82,7 +83,6 @@ export const Navbar = () => {
                 )}
               </div>
 
-              {/* Action Buttons */}
               <div className="flex items-center gap-2 ml-2 border-l border-white/10 pl-2">
                 {isWalletConnected && (
                   <motion.button
@@ -111,7 +111,6 @@ export const Navbar = () => {
           )}
         </AnimatePresence>
 
-        {/* The Core Wallet Trigger */}
         <motion.button 
           whileTap={{ scale: 0.95 }}
           className={cn(

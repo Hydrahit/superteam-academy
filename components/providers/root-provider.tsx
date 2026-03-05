@@ -1,33 +1,33 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Web3Provider } from './web3-provider';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useMemo } from 'react';
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+
+// Require the wallet adapter CSS for the modal to look right
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 export const RootProvider = ({ children }: { children: React.ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
+  // Setup the network connection (Devnet for testing)
+  const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 
-  useEffect(() => {
-    setMounted(true);
-    console.log("🚀 [SYSTEM]: Interactivity Unlocked. RootProvider Mounted.");
-  }, []);
-
-  // Avoid Hydration Mismatch: Don't render interactive shells until mounted
-  if (!mounted) {
-    return <div className="opacity-0">{children}</div>;
-  }
+  // Initialize supported wallets
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+    ],
+    []
+  );
 
   return (
-    <Web3Provider>
-      <AnimatePresence mode="wait">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        >
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
           {children}
-        </motion.div>
-      </AnimatePresence>
-    </Web3Provider>
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   );
 };

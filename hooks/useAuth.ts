@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { useWallet } from '@solana/wallet-adapter-react';
 import toast from 'react-hot-toast';
 
 export const useAuth = () => {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const { publicKey, connected, disconnect } = useWallet();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,6 @@ export const useAuth = () => {
 
     getSession();
 
-    // Listen for auth changes (Login/Logout)
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -28,7 +27,7 @@ export const useAuth = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, []); // supabase is stable now, no need to add to dependencies
 
   const bindWalletToProfile = async () => {
     if (!user || !publicKey) {

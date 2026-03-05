@@ -1,6 +1,13 @@
-import { createSharedPathnamesNavigation } from 'next-intl/navigation';
+import { createNavigation } from 'next-intl/navigation';
+import { defineRouting } from 'next-intl/routing';
 
-export const locales = ['en', 'es', 'pt'] as const;
+// 1. Define your routing rules
+export const routing = defineRouting({
+  locales: ['en', 'es', 'pt'],
+  defaultLocale: 'en'
+});
 
-// This creates smart versions of Link and useRouter that ALWAYS remember the user's language
-export const { Link, redirect, usePathname, useRouter } = createSharedPathnamesNavigation({ locales });
+// 2. Export the smart versions of Link, redirect, etc.
+// This replaces the deprecated createSharedPathnamesNavigation
+export const { Link, redirect, usePathname, useRouter, getPathname } = 
+  createNavigation(routing);
