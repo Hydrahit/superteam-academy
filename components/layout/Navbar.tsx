@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Wallet, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
+// FIX: Using our smart centralized router instead of next/navigation
+import { useRouter } from '@/lib/navigation';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 
 export const Navbar = () => {
@@ -21,18 +22,17 @@ export const Navbar = () => {
       scrolled ? "bg-[#060608]/90 backdrop-blur-md border-b border-white/10" : "bg-transparent"
     )}>
       <div className="flex items-center gap-6">
-        <button onClick={() => router.back()} className="text-white/50 hover:text-white transition-colors">
+        {/* Smart router automatically knows to go to /en or /es */}
+        <button onClick={() => router.push('/')} className="text-white/50 hover:text-white transition-colors">
           <ChevronLeft size={24} />
         </button>
-        <div className="text-xl font-syne font-black text-white italic tracking-tighter">
+        <button onClick={() => router.push('/')} className="text-xl font-syne font-black text-white italic tracking-tighter hover:scale-105 transition-transform">
           SUPERTEAM<span className="text-[#14F195]">ACADEMY</span>
-        </div>
+        </button>
       </div>
       
       <div className="flex items-center gap-4">
-        {/* The newly integrated Language Switcher */}
         <LanguageSwitcher />
-        
         <button 
           onClick={bindWallet} 
           className={cn(
