@@ -1,129 +1,114 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, LogOut, ChevronLeft, Link as LinkIcon } from 'lucide-react';
-import { useRouter } from '@/lib/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
-import { cn } from '@/lib/utils';
-import toast from 'react-hot-toast';
 
-export const Navbar = () => {
-  const router = useRouter();
-  const { user, isLoggedIn, signOut, isWalletConnected, publicKey, bindWalletToProfile } = useAuth();
-  const [scrolled, setScrolled] = useState(false);
+const navLinks = [
+  { href: '/courses', label: 'Courses' },
+  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/dashboard', label: 'Dashboard' },
+];
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+export default function Navbar() {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className={cn(
-      "fixed top-0 w-full z-[100] px-6 py-4 flex justify-between items-center transition-all duration-500",
-      scrolled ? "bg-black/80 backdrop-blur-2xl border-b border-white/10 py-3" : "bg-transparent"
-    )}>
-      {/* Left: Brand & Navigation */}
-      <div className="flex items-center gap-6">
-        <motion.button 
-          whileTap={{ scale: 0.9 }}
-          onClick={() => router.push('/')} 
-          className="text-white/40 hover:text-[#14F195] transition-colors"
-        >
-          <ChevronLeft size={28} />
-        </motion.button>
-        
-        {/* FIX: Removed the rogue 'Wall' typo from here */}
-        <div 
-          onClick={() => router.push('/')}
-          className="flex flex-col cursor-pointer group"
-        >
-          <span className="text-xl font-syne font-black text-white italic tracking-tighter leading-none">
-            SUPERTEAM<span className="text-[#14F195]">ACADEMY</span>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[rgba(6,6,6,0.85)] backdrop-blur-md border-b border-[#1A1A1A]">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 group">
+          <span className="text-2xl">🎓</span>
+          <span className="font-display font-bold text-[#00C896] text-lg tracking-tight">
+            Superteam Academy
           </span>
-          <span className="text-[8px] font-mono text-white/30 tracking-[0.3em] uppercase group-hover:text-[#14F195] transition-colors">
-            Elite_Onboarding_V3
-          </span>
+        </Link>
+
+        {/* Desktop Nav */}
+        <div className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`relative text-sm font-medium transition-colors duration-200 ${
+                  isActive ? 'text-white' : 'text-[#888888] hover:text-white'
+                }`}
+              >
+                {link.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#00C896]"
+                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Right side */}
+        <div className="flex items-center gap-3">
+          <WalletMultiButton
+            style={{
+              backgroundColor: '#00C896',
+              color: '#000000',
+              fontFamily: 'Space Grotesk, sans-serif',
+              fontWeight: 700,
+              borderRadius: '0.75rem',
+              fontSize: '0.875rem',
+              height: '40px',
+              padding: '0 1.25rem',
+            }}
+          />
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden text-white p-1.5"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
       </div>
-      
-      {/* Right: Controls & Identity */}
-      <div className="flex items-center gap-4">
-        <LanguageSwitcher />
 
-        <AnimatePresence mode="wait">
-          {isLoggedIn ? (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3 bg-white/5 border border-white/10 p-1 pr-4 rounded-full"
-            >
-              <img 
-                src={user?.user_metadata?.avatar_url} 
-                className="w-8 h-8 rounded-full border border-[#14F195]/50" 
-                alt="profile" 
-              />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-white leading-none">
-                  {user?.user_metadata?.full_name?.split(' ')[0]}
-                </span>
-                {isWalletConnected ? (
-                  <span className="text-[8px] font-mono text-[#14F195] truncate w-16">
-                    {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}
-                  </span>
-                ) : (
-                  <button 
-                    onClick={() => toast.error("Connect Wallet to Link Profile")}
-                    className="text-[8px] font-mono text-white/40 hover:text-white transition-colors"
+      {/* Mobile dropdown */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden bg-[rgba(6,6,6,0.95)] border-b border-[#1A1A1A]"
+          >
+            <div className="px-6 py-4 flex flex-col gap-3">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`text-sm font-medium py-2 transition-colors ${
+                      isActive ? 'text-[#00C896]' : 'text-[#888888] hover:text-white'
+                    }`}
                   >
-                    NO_WALLET
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 ml-2 border-l border-white/10 pl-2">
-                {isWalletConnected && (
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={bindWalletToProfile}
-                    className="text-white/40 hover:text-[#14F195] transition-colors"
-                    title="Link Wallet to Progress"
-                  >
-                    <LinkIcon size={14} />
-                  </motion.button>
-                )}
-                <button onClick={() => signOut()} className="text-white/40 hover:text-red-500 transition-colors">
-                  <LogOut size={14} />
-                </button>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/')}
-              className="px-6 py-2 bg-white text-black font-black text-[10px] tracking-widest uppercase rounded-full"
-            >
-              Get_Started
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        <motion.button 
-          whileTap={{ scale: 0.95 }}
-          className={cn(
-            "px-6 py-2 rounded-full font-bold text-[10px] tracking-widest uppercase flex items-center gap-2 border transition-all",
-            isWalletConnected 
-              ? "bg-[#14F195]/10 border-[#14F195]/50 text-[#14F195] shadow-[0_0_15px_rgba(20,241,149,0.2)]" 
-              : "bg-white/5 border-white/20 text-white hover:border-[#14F195]"
-          )}
-        >
-          <Wallet size={14} /> 
-          {isWalletConnected ? 'Wallet_Active' : 'Connect_Wallet'}
-        </motion.button>
-      </div>
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
-};
+}

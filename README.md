@@ -1,233 +1,301 @@
-# 🎓 Superteam Academy
+# Superteam Academy
 
-> **A Web3 Learning Management System built on Solana — soulbound XP tokens, on-chain credentials, and gamified progress for the LATAM developer community.**
+**On-chain education platform built on Solana for the Superteam Brazil community.**
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-superteam--academy.vercel.app-6366f1?style=for-the-badge)](https://superteam-academy.vercel.app)
-[![PR #70](https://img.shields.io/badge/PR-%2370-green?style=for-the-badge&logo=github)](https://github.com/solanabr/superteam-academy/pull/70)
-[![Next.js](https://img.shields.io/badge/Next.js_14-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=for-the-badge&logo=typescript)](https://typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-283_passing-22c55e?style=for-the-badge)](https://vitest.dev)
-[![i18n](https://img.shields.io/badge/i18n-EN_|_PT--BR_|_ES-f59e0b?style=for-the-badge)](https://next-intl-docs.vercel.app)
+Learn Web3, complete courses, pass quizzes, and earn verifiable NFT certificates — all powered by Solana and Anchor.
 
 ---
 
-## 🌐 Live Demo
+## Features
 
-**→ [https://superteam-academy.vercel.app](https://superteam-academy.vercel.app)**
-
-Connect any Solana wallet (Phantom / Solflare) on **Devnet** — no real SOL needed.
-
----
-
-## 🏗️ Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    FRONTEND (this repo)                  │
-│         Next.js 14 App Router · TypeScript · Tailwind    │
-├─────────────────────────────────────────────────────────┤
-│  Auth Layer        │  Supabase Auth (Google OAuth)       │
-│                    │  Ed25519 wallet signature verify     │
-│                    │  HttpOnly cookie sessions (@supabase/ssr) │
-├─────────────────────────────────────────────────────────┤
-│  On-chain Layer    │  Token-2022 XP tokens (soulbound)   │
-│                    │  Metaplex Core NFT credentials       │
-│                    │  Course PDAs + Enrollment PDAs       │
-│                    │  256-bit lesson bitmap per learner   │
-├─────────────────────────────────────────────────────────┤
-│  Off-chain Layer   │  Supabase PostgreSQL                 │
-│                    │  Helius DAS API (leaderboard)        │
-│                    │  Streaks + achievements (frontend)   │
-└─────────────────────────────────────────────────────────┘
-```
+- **Wallet-Based Auth** — Sign in with Phantom, Backpack, or Solflare. No email or password needed.
+- **Structured Courses** — 5 curated courses covering Web3 fundamentals through advanced Solana development.
+- **Interactive Quizzes** — Server-graded quizzes with anti-cheat (answers never sent to client). 70% passing threshold.
+- **On-Chain Progress** — Course enrollment, lesson completions, and XP tracked via Solana PDAs.
+- **NFT Certificates** — Mint a soulbound-style NFT certificate upon course completion.
+- **Leaderboard** — XP-based rankings across all learners.
+- **Admin Dashboard** — Platform analytics, course management, and activity monitoring.
+- **Dark-Mode UI** — Fully responsive design with Framer Motion animations.
 
 ---
 
-## ✨ Features
-
-### 🪙 On-chain Gamification (per spec)
-| Feature | Implementation |
-|---|---|
-| **XP Tokens** | Token-2022 `NonTransferable` (soulbound). Wallet balance = XP |
-| **Levels** | `Level = floor(√(xp / 100))` — derived, never stored |
-| **Credentials** | Metaplex Core NFTs with `PermanentFreezeDelegate` — upgraded **in-place**, no wallet clutter |
-| **Course PDAs** | On-chain program-derived accounts per course |
-| **Enrollment PDAs** | Per-learner, closeable after completion to reclaim rent |
-| **Lesson Progress** | 256-bit bitmap — up to 256 lessons per course, gas-efficient |
-| **Achievements** | 256-bit bitmap, each backed by a soulbound Core NFT |
-| **Leaderboard** | Off-chain — Helius DAS API indexes XP token balances |
-| **Streaks** | Frontend-only — localStorage + Supabase (per spec) |
-
-### 🔐 Authentication
-- Google OAuth via Supabase Auth
-- Wallet linking with **Ed25519 signature verification** on the server
-- Zero trust: JWT validated server-side on every protected route
-- HttpOnly cookie sessions — XSS resistant
-
-### 🌎 Internationalization
-Full EN / PT-BR / ES support via `next-intl` — every string translated, locale persists across sessions.
-
-### 📊 Dashboard
-- Real-time XP + level display
-- Streak tracker with visual history
-- Achievement showcase
-- Course progress overview
-
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript (strict, 0 errors) |
-| Styling | Tailwind CSS + shadcn/ui |
-| Auth | Supabase Auth + @supabase/ssr |
-| Wallet | @solana/wallet-adapter (Wallet Standard) |
-| On-chain | Anchor · Token-2022 · Metaplex Core |
-| Indexing | Helius DAS API |
-| Database | Supabase PostgreSQL |
-| Testing | Vitest + @testing-library/react |
-| i18n | next-intl |
-| Deployment | Vercel |
+|-------|------------|
+| Frontend | Next.js 14 (App Router), React 18, TypeScript |
+| Styling | Tailwind CSS 3.4, Framer Motion |
+| Auth | NextAuth.js with Solana wallet signature verification |
+| Database | PostgreSQL via Prisma ORM |
+| Blockchain | Solana (Anchor 0.29), SPL Token, Metaplex |
+| Wallet | `@solana/wallet-adapter` (Phantom, Backpack, Solflare) |
+| Fonts | Space Grotesk (display), DM Sans (body), JetBrains Mono (code) |
 
 ---
 
-## 🧪 Test Coverage
+## Project Structure
 
-**283 tests · ~90% coverage**
-
-| Module | Tests | Coverage |
-|---|---|---|
-| `lib/utils.ts` | 55 | 100% |
-| `lib/auth-service.ts` | 38 | ~95% |
-| `MockLearningProgressService` | 52 | ~90% |
-| `SupabaseProgressService` | 35 | ~95% |
-| `middleware.ts` | 28 | ~85% |
-| `app/api/auth/link-wallet` | 25 | ~95% |
-| `contexts/AuthContext` | 24 | ~80% |
-| Integration tests | 26 | — |
-
-```bash
-npm test              # run all 283 tests
-npm run test:coverage # full coverage report
+```
+superteam-academy/
+├── app/                          # Next.js App Router pages
+│   ├── page.tsx                  # Landing page
+│   ├── layout.tsx                # Root layout + providers
+│   ├── globals.css               # Design system + animations
+│   ├── courses/
+│   │   ├── page.tsx              # Course catalog (search + filter)
+│   │   └── [slug]/
+│   │       ├── page.tsx          # Course detail + enrollment
+│   │       └── lessons/
+│   │           └── [lessonId]/
+│   │               └── page.tsx  # Lesson viewer + quiz trigger
+│   ├── dashboard/
+│   │   └── page.tsx              # User dashboard (progress + certs)
+│   ├── leaderboard/
+│   │   └── page.tsx              # XP rankings
+│   ├── admin/
+│   │   └── page.tsx              # Admin dashboard
+│   └── api/
+│       ├── auth/[...nextauth]/route.ts
+│       ├── courses/
+│       │   ├── route.ts              # GET all courses
+│       │   └── [slug]/
+│       │       ├── route.ts          # GET single course
+│       │       └── enroll/route.ts   # POST enroll
+│       ├── lessons/[lessonId]/
+│       │   ├── route.ts              # GET lesson content
+│       │   └── complete/route.ts     # POST mark complete
+│       ├── quizzes/[lessonId]/
+│       │   ├── route.ts              # GET quiz questions
+│       │   └── submit/route.ts       # POST submit answers
+│       ├── certificates/route.ts     # GET certs + POST mint NFT
+│       ├── dashboard/route.ts        # GET dashboard data
+│       └── leaderboard/route.ts      # GET rankings
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.tsx            # Fixed nav + wallet button
+│   │   └── Footer.tsx            # 3-column footer
+│   ├── landing/
+│   │   ├── HeroSection.tsx       # Animated hero + floating card
+│   │   ├── HowItWorks.tsx        # 3-step process
+│   │   ├── FeaturedCourses.tsx   # Course preview cards
+│   │   ├── StatsBar.tsx          # Animated count-up stats
+│   │   ├── NFTShowcase.tsx       # Certificate feature showcase
+│   │   ├── Testimonials.tsx      # Community quotes
+│   │   └── CTABanner.tsx         # Gradient CTA
+│   ├── courses/
+│   │   ├── CourseCard.tsx        # Reusable course card
+│   │   ├── LessonSidebar.tsx     # Lesson nav + completion marks
+│   │   └── QuizModal.tsx         # Quiz dialog with scoring
+│   └── dashboard/
+│       ├── StatsOverview.tsx     # 4-stat summary
+│       ├── ProgressCard.tsx      # Course progress bar
+│       └── CertificateCard.tsx   # NFT cert display + mint button
+├── lib/
+│   ├── prisma.ts                 # Prisma singleton
+│   ├── utils.ts                  # Helpers (cn, truncateWallet, etc.)
+│   ├── auth.ts                   # NextAuth config + wallet verify
+│   ├── providers.tsx             # Client providers wrapper
+│   └── solana/
+│       ├── wallet.ts             # Wallet adapter setup
+│       ├── nft.ts                # Metaplex NFT minting
+│       └── program.ts           # Anchor program interface + PDAs
+├── prisma/
+│   ├── schema.prisma             # 7 models (User, Course, Lesson, Quiz, etc.)
+│   └── seed.ts                   # 5 courses, 43 lessons, 86 quiz questions
+├── programs/superteam_academy/
+│   ├── Cargo.toml                # Rust dependencies
+│   └── src/
+│       └── lib.rs                # Anchor program (6 instructions)
+├── tests/
+│   └── superteam_academy.ts      # 15 integration tests
+├── Anchor.toml                   # Anchor config
+├── package.json                  # Dependencies
+├── tailwind.config.ts            # Custom theme
+├── tsconfig.json                 # TypeScript config
+├── next.config.js                # Next.js config
+└── .env.example                  # Environment variables
 ```
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
 ### Prerequisites
-- Node.js 20+
-- A Phantom or Solflare wallet (switch to **Devnet**)
 
-### Setup
+- Node.js 18+
+- PostgreSQL database
+- Solana CLI + Anchor CLI (for on-chain program)
+- A Solana wallet (Phantom, Backpack, or Solflare)
+
+### 1. Clone & Install
 
 ```bash
-# 1. Clone
-git clone https://github.com/Hydrahit/superteam-academy
+git clone https://github.com/your-org/superteam-academy.git
 cd superteam-academy
-
-# 2. Install
 npm install
-
-# 3. Configure environment
-cp .env.example .env.local
 ```
 
-**.env.local minimum config:**
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-NEXT_PUBLIC_SOLANA_NETWORK=devnet
-NEXT_PUBLIC_BACKEND=supabase
-```
+### 2. Environment Setup
 
 ```bash
-# 4. Run
+cp .env.example .env
+```
+
+Edit `.env` with your values:
+
+```env
+DATABASE_URL="postgresql://user:pass@localhost:5432/superteam_academy"
+NEXTAUTH_SECRET="your-random-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_SOLANA_RPC_URL="https://api.devnet.solana.com"
+NEXT_PUBLIC_SOLANA_NETWORK="devnet"
+```
+
+### 3. Database Setup
+
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Run migrations
+npx prisma db push
+
+# Seed with sample data (5 courses, 43 lessons, 86 quiz questions)
+npx prisma db seed
+```
+
+### 4. Run Development Server
+
+```bash
 npm run dev
-# → http://localhost:3000
 ```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📁 Project Structure
+## Solana Program
 
+### Build & Deploy
+
+```bash
+# Build the program
+anchor build
+
+# Run tests (requires local validator)
+anchor test
+
+# Deploy to devnet
+anchor deploy --provider.cluster devnet
 ```
-onchain-academy/app/
-├── app/                        # Next.js App Router pages
-│   ├── (platform)/dashboard/   # Protected dashboard
-│   ├── courses/[slug]/         # Course pages
-│   │   └── lessons/[lessonId]/ # Lesson viewer
-│   ├── leaderboard/            # Global leaderboard
-│   └── api/auth/               # Auth API routes
-├── components/
-│   ├── lesson/LessonView.tsx   # Monaco editor + lesson UI
-│   ├── wallet/WalletButton.tsx # Wallet connect + XP display
-│   └── auth/AuthButton.tsx     # Full auth state machine
-├── contexts/
-│   └── AuthContext.tsx         # Global auth state (5 stages)
-├── lib/
-│   ├── auth-service.ts         # Google OAuth + wallet linking
-│   ├── services/               # Learning progress service layer
-│   │   ├── index.ts            # Service factory (mock/supabase/onchain)
-│   │   ├── learning-progress.ts# Core service + MockService
-│   │   └── SupabaseProgressService.ts
-│   └── supabase/               # Server + browser Supabase clients
-├── middleware.ts               # Auth guard + i18n routing
-└── messages/                   # EN / PT-BR / ES translations
-    ├── en.json
-    ├── pt-br.json
-    └── es.json
-```
+
+### Program Instructions
+
+| Instruction | Description | Authority |
+|-------------|-------------|-----------|
+| `initialize_platform` | Set up platform with admin authority | Admin |
+| `create_course` | Register a course on-chain | Admin |
+| `enroll` | Student enrolls in a course | Student |
+| `complete_lesson` | Record lesson completion + award XP | Student |
+| `mint_certificate` | Mint NFT certificate for completed course | Student |
+| `deactivate_course` | Deactivate a course | Admin |
+
+### PDA Structure
+
+| Account | Seeds | Description |
+|---------|-------|-------------|
+| Platform | `["platform"]` | Global platform state |
+| Course | `["course", course_id]` | Course metadata |
+| Enrollment | `["enrollment", student, course]` | Enrollment record |
+| Progress | `["progress", student, course]` | Lesson progress + XP |
+| Certificate | `["certificate", student, course]` | Minted certificate data |
+
+### XP System
+
+- **+10 XP** per lesson completed
+- **+50 XP** bonus on course completion
+- **70%** minimum quiz score to pass
+- Rankings on the leaderboard are sorted by total XP
 
 ---
 
-## 🔑 Key Design Decisions
+## API Routes
 
-### Service Repository Pattern
-One interface, three implementations — switch with a single env var:
-```typescript
-NEXT_PUBLIC_BACKEND=mock       // instant dev, no DB
-NEXT_PUBLIC_BACKEND=supabase   // production backend
-NEXT_PUBLIC_BACKEND=onchain    // full Solana integration
-```
-
-### Zero-Trust Auth
-```typescript
-// ❌ Never do this
-const { session } = await supabase.auth.getSession()
-
-// ✅ Always validate JWT on the server
-const { data: { user } } = await supabase.auth.getUser()
-```
-
-### Ed25519 Wallet Verification
-The wallet link flow proves ownership cryptographically — the server verifies the signature before writing to DB. Replay attacks are prevented by embedding the user ID + timestamp in the signed message.
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/courses` | Optional | List courses (search + difficulty filter) |
+| GET | `/api/courses/[slug]` | Optional | Course detail with lessons |
+| POST | `/api/courses/[slug]/enroll` | Required | Enroll in a course |
+| GET | `/api/lessons/[lessonId]` | Optional | Lesson content + navigation |
+| POST | `/api/lessons/[lessonId]/complete` | Required | Mark lesson complete |
+| GET | `/api/quizzes/[lessonId]` | Required | Get quiz questions (no answers) |
+| POST | `/api/quizzes/[lessonId]/submit` | Required | Submit quiz + get graded results |
+| GET | `/api/certificates` | Required | User's certificates |
+| POST | `/api/certificates` | Required | Mint NFT certificate |
+| GET | `/api/dashboard` | Required | Dashboard stats + enrolled courses |
+| GET | `/api/leaderboard` | Optional | Paginated XP rankings |
 
 ---
 
-## 🌍 Internationalization
+## Database Schema
 
-Every page is fully translated:
-```
-/en/courses     → English
-/pt-br/courses  → Português
-/es/courses     → Español
-```
+**7 Models:** User, Course, Lesson, Quiz, Enrollment, LessonCompletion, Certificate
 
-Language detection priority: URL prefix → cookie → `en` (never Accept-Language header, to avoid stale-cookie bugs).
-
----
-
-## 👤 Author
-
-**Hydrahit** — [@Hydrahit_nad on X](https://x.com/Hydrahit_nad)
-
-Submission for the [Superteam Brazil Academy Bounty](https://earn.superteam.fun)
+- **User** — Wallet address as primary identifier
+- **Course** — Title, slug, description, difficulty, lessons
+- **Lesson** — Content (markdown), video URL, order within course
+- **Quiz** — JSON array of questions with options, correct answers, explanations
+- **Enrollment** — Links user to course with progress percentage
+- **LessonCompletion** — Tracks which lessons a user has finished
+- **Certificate** — NFT mint address and metadata URI
 
 ---
 
-## 📄 License
+## Seed Data
 
-MIT — see [LICENSE](./LICENSE)
+The seed file populates 5 complete courses:
+
+| Course | Difficulty | Lessons | Quiz Questions |
+|--------|-----------|---------|----------------|
+| Web3 Basics | Beginner | 5 | 10 |
+| Intro to Solana | Beginner | 8 | 16 |
+| Building dApps with Anchor | Intermediate | 10 | 20 |
+| DeFi Fundamentals | Intermediate | 8 | 16 |
+| Advanced Solana Security | Advanced | 12 | 24 |
+| **Total** | | **43** | **86** |
+
+---
+
+## Design System
+
+| Token | Value |
+|-------|-------|
+| Background | `#0A0A0F` |
+| Primary (Green) | `#00C896` |
+| Accent (Purple) | `#9945FF` |
+| Surface | `white/5` with `border-white/10` |
+| Display Font | Space Grotesk |
+| Body Font | DM Sans |
+| Mono Font | JetBrains Mono |
+| Border Radius | `2xl` (16px) |
+| Animations | Framer Motion fade-up, stagger |
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -m 'Add my feature'`
+4. Push to branch: `git push origin feature/my-feature`
+5. Open a Pull Request
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+Built with Solana for the **Superteam Brazil** community.
