@@ -1136,8 +1136,8 @@ function LandingApp() {
   const [soundOn, setSoundOn] = useState(false);
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: STYLES}} suppressHydrationWarning />
-      <div className="crt" style={{position:"relative",background:"var(--bg, #060608)",minHeight:"100vh",overflowX:"hidden"}}>
+      <style>{STYLES}</style>
+      <div className="crt" style={{position:"relative",background:"#060608",minHeight:"100vh",overflowX:"hidden"}}>
         <ScrollProgress/>
         <CursorSpotlight/>
         <Background/>
